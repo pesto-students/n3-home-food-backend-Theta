@@ -4,7 +4,7 @@ const router = express.Router();
 
 
 router.get(`/`, async (req, res) =>{
-    console.log('till seller')
+    console.log('admin')
     const adminList = await Admin.find();  
     if(!adminList) {
         res.status(500).json({success: false})
