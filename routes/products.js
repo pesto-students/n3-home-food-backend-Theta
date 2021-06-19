@@ -40,6 +40,7 @@ router.post(`/`, uploadOptions.single("image"), async (req, res) => {
 
   let categoryArray = req.body.category.split(',')
   
+  // multiple products get added  with diffrent category
   for(let item of categoryArray){
     if (!mongoose.isValidObjectId(item)) {
       return res.status(400).send("Invalid Product category");

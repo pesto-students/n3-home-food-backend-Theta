@@ -55,7 +55,7 @@ router.post("/login", async (req, res) => {
 
     res
       .status(200)
-      .json({ success: true, token: token, customerType: seller.customerType });
+      .json({ success: true, token: token, userType: seller.customerType });
   } else {
     res.status(400).send("Invalid Password");
   }
@@ -139,7 +139,7 @@ router.get(`/get/getproducts`, async (req, res) => {
 });
 
 // get sellers from product id
-router.get(`/getSellersByProducts`, async (req, res) => {
+router.get(`/get/SellersByProducts`, async (req, res) => {
   let filter = req.query.productid;
   const sellerList = await Seller.find({
     products: { $in: [mongoose.Types.ObjectId(req.query.productid)] },
@@ -151,7 +151,8 @@ router.get(`/getSellersByProducts`, async (req, res) => {
 });
 
 // //get sellers from category
-router.get(`/getSellersByCategory`, async (req, res) => {
+router.get(`/get/SellersByCategory`, async (req, res) => {
+  console.log("asda");
   const sellerList = await Seller.find({
     productCategories: { $in: [req.query.categoryId] },
   });
@@ -206,22 +207,28 @@ router.post("/login", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   const userExist = await Seller.findById(req.params.id);
+  const product = await Product.findById(req.body.products[0]);
   let productsArray = [];
   let categoryArray = [];
   productsArray = [...userExist.products];
   productsArray = productsArray.concat(req.body.products);
   categoryArray = userExist.productCategories;
 
+  console.log("product", product.category);
+  // create a my products
+  const myProduct = {
+    productId: product.id,
+    quantity: 0,
+    price: 0,
+    productCategory: product.category,
+  };
+  userExist.myProducts.push(myProduct);
 
-  for (let element of req.body.products) {
-    const product = await Product.findById(element);
-    // check if the exist product array has cateogry of the new product we are adding
-    for (let item of product.category) {
-      if (!categoryArray.includes(item)) {
-        categoryArray.push(item);
-      }
+  // check if the exist product array has cateogry of the new product we are adding
+  for (let item of product.category) {
+    if (!categoryArray.includes(item)) {
+      categoryArray.push(item);
     }
-    console.log("category", typeof categoryArray, categoryArray);
   }
 
   const user = await Seller.findByIdAndUpdate(
@@ -235,6 +242,7 @@ router.put("/:id", async (req, res) => {
       adress: userExist.adress,
       idProof: userExist.idProof,
       products: productsArray,
+      myProducts: userExist.myProducts,
       productCategories: categoryArray,
       requestedProducts: userExist.requestedProducts,
       status: "Approved",
@@ -252,40 +260,49 @@ router.put("/:id", async (req, res) => {
 router.put("/update-product-quantitiy/:id", async (req, res) => {
   const userExist = await Seller.findById(req.params.id);
 
-  let productsArray = [];
-  productsArray = [...userExist.products];
+  // userExist.myProducts.push(myProduct);
 
-  for (let element of productsArray) {
-    // check if the exist product array has the product to update
-    if(element){
-      console.log("products", element);
+  let myProductsArray = []
+  for (let item of userExist.myProducts) {
+    if (req.body.productid.toString() === item.productId.toString()) {
+      // we got our product to be edited, now edit it
+
+      // create a my products
+      const myProduct = {
+        productId: item.id,
+        quantity: req.body.product_quantity,
+        price: req.body.product_price,
+        productCategory: item.category,
+      };
+
+      myProductsArray.push(myProduct)
+
     }
-
-    
   }
 
-  // const user = await Seller.findByIdAndUpdate(
-  //   req.params.id,
-  //   {
-  //     name: userExist.name,
-  //     email: userExist.email,
-  //     phone: userExist.phone,
-  //     image: userExist.image,
-  //     customerType: userExist.customerType,
-  //     adress: userExist.adress,
-  //     idProof: userExist.idProof,
-  //     products: productsArray,
-  //     productCategories: categoryArray,
-  //     requestedProducts: userExist.requestedProducts,
-  //     status: "Approved",
-  //     rejection_reason: userExist.rejection_reason,
-  //   },
-  //   { new: true }
-  // );
+  const user = await Seller.findByIdAndUpdate(
+    req.params.id,
+    {
+      name: userExist.name,
+      email: userExist.email,
+      phone: userExist.phone,
+      image: userExist.image,
+      customerType: userExist.customerType,
+      adress: userExist.adress,
+      idProof: userExist.idProof,
+      products: userExist.products,
+      myProducts: myProductsArray,
+      productCategories: userExist.productCategories,
+      requestedProducts: userExist.requestedProducts,
+      status: "Approved",
+      rejection_reason: userExist.rejection_reason,
+    },
+    { new: true }
+  );
 
-  // if (!user) return res.status(400).send("the product cannot be added!");
+  if (!user) return res.status(400).send("the product cannot be added!");
 
-  // res.send(user);
+  res.send(user);
 });
 
 // Approve a seller

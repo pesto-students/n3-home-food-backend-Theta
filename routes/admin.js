@@ -31,7 +31,7 @@ router.post("/login", async (req, res) => {
             { expiresIn: "1w" }
           );
       
-          res.status(200).json({ success: true, token: token,customerType: admin.customerType });
+          res.status(200).json({ success: true, token: token,userType: admin.customerType });
     }
     else {
         res.status(400).send("Invalid Phone Number");

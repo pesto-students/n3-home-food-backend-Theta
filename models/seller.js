@@ -1,5 +1,26 @@
 const mongoose = require('mongoose');
 
+const myItemSchema = mongoose.Schema({
+    productId :{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"Product"
+    },
+    quantity:{
+        type:Number,
+        default:1,
+        min:[1,'Quantity cannot be less than 1']
+    },
+    price:{
+        type:Number,
+        default:0
+     } ,
+     productCategory:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"Category"
+     }
+})
+
+
 const sellerSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -33,6 +54,7 @@ const sellerSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref:'Product'
     }],
+    myProducts:[myItemSchema],
     productCategories:[{
         type: mongoose.Schema.Types.ObjectId,
         ref:'Category'
