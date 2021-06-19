@@ -25,13 +25,13 @@ router.post("/login", async (req, res) => {
         const token = jwt.sign(
             {
               userId: admin.id,
-              isAdmin: admin.isAdmin,
+              customerType: admin.customerType,
             },
             Secret,
             { expiresIn: "1w" }
           );
       
-          res.status(200).json({ success: true, token: token });
+          res.status(200).json({ success: true, token: token,customerType: admin.customerType });
     }
     else {
         res.status(400).send("Invalid Phone Number");

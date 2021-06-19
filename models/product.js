@@ -17,11 +17,11 @@ const productSchema = mongoose.Schema({
         type: Number,
         required:true
     },
-    category: {
+    category: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Category',
         required:true
-    },
+    }],
     status:{
         type: String,
         default:'Approved'

@@ -38,6 +38,28 @@ const storage = multer.diskStorage({
 
 const uploadOptions = multer({ storage: storage });
 
+// login a seller
+router.post("/login", async (req, res) => {
+  const seller = await Seller.findOne({ phone: req.body.phone });
+  if (!seller) return res.status(400).send("No Seller Found");
+
+  if (req.body.phone === seller.phone) {
+    const token = jwt.sign(
+      {
+        userId: seller.id,
+        customerType: seller.customerType,
+      },
+      secret,
+      { expiresIn: "1w" }
+    );
+
+    res
+      .status(200)
+      .json({ success: true, token: token, customerType: seller.customerType });
+  } else {
+    res.status(400).send("Invalid Password");
+  }
+});
 
 // get sellers
 // get all
@@ -59,11 +81,11 @@ router.get(`/:id`, async (req, res) => {
   res.send(seller);
 });
 
-
-
 // get pending
 router.get(`/get/pending`, async (req, res) => {
-  const sellerList = await Seller.find({status:'Pending'}).populate("products");
+  const sellerList = await Seller.find({ status: "Pending" }).populate(
+    "products"
+  );
   if (!sellerList) {
     res.status(500).json({ success: false });
   }
@@ -72,7 +94,9 @@ router.get(`/get/pending`, async (req, res) => {
 
 // get approved sellers
 router.get(`/get/approved`, async (req, res) => {
-  const sellerList = await Seller.find({status:'Approved'}).populate("products");
+  const sellerList = await Seller.find({ status: "Approved" }).populate(
+    "products"
+  );
   if (!sellerList) {
     res.status(500).json({ success: false });
   }
@@ -81,7 +105,9 @@ router.get(`/get/approved`, async (req, res) => {
 
 // get rejected sellers
 router.get(`/get/rejected`, async (req, res) => {
-  const sellerList = await Seller.find({status:'Rejected'}).populate("products");
+  const sellerList = await Seller.find({ status: "Rejected" }).populate(
+    "products"
+  );
   if (!sellerList) {
     res.status(500).json({ success: false });
   }
@@ -89,8 +115,10 @@ router.get(`/get/rejected`, async (req, res) => {
 });
 
 // get products by sellerid
-router.get(`/getproducts`, async (req, res) => {
+router.get(`/get/getproducts`, async (req, res) => {
+  console.log("filter", req);
   let filter = mongoose.Types.ObjectId(req.query.sellerid);
+
   const sellerList = await Seller.aggregate([
     { $match: { _id: filter } },
     // {$match:{'name':'sahil'}},
@@ -123,10 +151,10 @@ router.get(`/getSellersByProducts`, async (req, res) => {
 });
 
 // //get sellers from category
- router.get(`/getSellersByCategory`, async (req, res) => {
-  
-
-  const sellerList = await Seller.find({productCategories :{$in : [req.query.categoryId]}});
+router.get(`/getSellersByCategory`, async (req, res) => {
+  const sellerList = await Seller.find({
+    productCategories: { $in: [req.query.categoryId] },
+  });
 
   if (!sellerList) {
     res.status(500).json({ success: false });
@@ -135,13 +163,11 @@ router.get(`/getSellersByProducts`, async (req, res) => {
 });
 
 router.post("/register", async (req, res) => {
-
   console.log("res", res);
   let seller = new Seller({
     name: req.body.name,
     email: req.body.email,
     image: req.body.image,
-    passwordHash: bcrypt.hashSync(req.body.password, 10),
     phone: req.body.phone,
     adress: req.body.adress,
     idProof: req.body.idProof,
@@ -174,10 +200,10 @@ router.post("/login", async (req, res) => {
   }
 });
 
-
 // updating of seller
 
 // add products to seller and also update category
+
 router.put("/:id", async (req, res) => {
   const userExist = await Seller.findById(req.params.id);
   let productsArray = [];
@@ -186,102 +212,145 @@ router.put("/:id", async (req, res) => {
   productsArray = productsArray.concat(req.body.products);
   categoryArray = userExist.productCategories;
 
-    for (let element of req.body.products) {
-      const product = await Product.findById(element);
-      categoryArray.includes(product.category)
-      if (product && !categoryArray.includes(product.category)) {
-        categoryArray.push(product.category);
+
+  for (let element of req.body.products) {
+    const product = await Product.findById(element);
+    // check if the exist product array has cateogry of the new product we are adding
+    for (let item of product.category) {
+      if (!categoryArray.includes(item)) {
+        categoryArray.push(item);
       }
+    }
+    console.log("category", typeof categoryArray, categoryArray);
   }
 
-    const user = await Seller.findByIdAndUpdate(
-      req.params.id,
-      {
-        name: userExist.name,
-        email: userExist.email,
-        passwordHash: userExist.passwordHash,
-        phone: userExist.phone,
-        isSeller: userExist.isSeller,
-        adress: userExist.adress,
-        idProof: userExist.idProof,
-        products: productsArray,
-        productCategories:categoryArray
-      },
-      { new: true }
-    );
+  const user = await Seller.findByIdAndUpdate(
+    req.params.id,
+    {
+      name: userExist.name,
+      email: userExist.email,
+      phone: userExist.phone,
+      image: userExist.image,
+      customerType: userExist.customerType,
+      adress: userExist.adress,
+      idProof: userExist.idProof,
+      products: productsArray,
+      productCategories: categoryArray,
+      requestedProducts: userExist.requestedProducts,
+      status: "Approved",
+      rejection_reason: userExist.rejection_reason,
+    },
+    { new: true }
+  );
 
-    if (!user) return res.status(400).send("the user cannot be created!");
+  if (!user) return res.status(400).send("the product cannot be added!");
 
-    res.send(user);
+  res.send(user);
 });
 
+// seller will update the quantity or price of my products
+router.put("/update-product-quantitiy/:id", async (req, res) => {
+  const userExist = await Seller.findById(req.params.id);
+
+  let productsArray = [];
+  productsArray = [...userExist.products];
+
+  for (let element of productsArray) {
+    // check if the exist product array has the product to update
+    if(element){
+      console.log("products", element);
+    }
+
+    
+  }
+
+  // const user = await Seller.findByIdAndUpdate(
+  //   req.params.id,
+  //   {
+  //     name: userExist.name,
+  //     email: userExist.email,
+  //     phone: userExist.phone,
+  //     image: userExist.image,
+  //     customerType: userExist.customerType,
+  //     adress: userExist.adress,
+  //     idProof: userExist.idProof,
+  //     products: productsArray,
+  //     productCategories: categoryArray,
+  //     requestedProducts: userExist.requestedProducts,
+  //     status: "Approved",
+  //     rejection_reason: userExist.rejection_reason,
+  //   },
+  //   { new: true }
+  // );
+
+  // if (!user) return res.status(400).send("the product cannot be added!");
+
+  // res.send(user);
+});
 
 // Approve a seller
 router.put("/approve/:id", async (req, res) => {
-  
   const seller = await Seller.findById(req.params.id);
   if (!seller) {
     res.status(500).json({ success: false });
   }
-  
-    const updatedSeller = await Seller.findByIdAndUpdate(
-      req.params.id,
-      {
-        name: seller.name,
-        email: seller.email,
-        passwordHash: seller.passwordHash,
-        phone: seller.phone,
-        image: seller.image,
-        customerType: seller.customerType,
-        adress: seller.adress,
-        idProof: seller.idProof,
-        products: seller.products,
-        productCategories: seller.productCategories,
-        requestedProducts: seller.requestedProducts,
-        status: 'Approved',
-        rejection_reason: seller.rejection_reason,
-      },
-      { new: true }
-    );
 
-    if (!updatedSeller) return res.status(400).send("the user cannot be created!");
+  const updatedSeller = await Seller.findByIdAndUpdate(
+    req.params.id,
+    {
+      name: seller.name,
+      email: seller.email,
+      phone: seller.phone,
+      image: seller.image,
+      customerType: seller.customerType,
+      adress: seller.adress,
+      idProof: seller.idProof,
+      products: seller.products,
+      productCategories: seller.productCategories,
+      requestedProducts: seller.requestedProducts,
+      status: "Approved",
+      rejection_reason: seller.rejection_reason,
+    },
+    { new: true }
+  );
 
-    res.send(updatedSeller);
+  if (!updatedSeller)
+    return res.status(400).send("the user cannot be created!");
+
+  res.send(updatedSeller);
 });
-
 
 // Reject a seller
 router.put("/reject/:id", async (req, res) => {
-  
   const seller = await Seller.findById(req.params.id);
   if (!seller) {
     res.status(500).json({ success: false });
   }
-  
-    const updatedSeller = await Seller.findByIdAndUpdate(
-      req.params.id,
-      {
-        name: seller.name,
-        email: seller.email,
-        passwordHash: seller.passwordHash,
-        phone: seller.phone,
-        image: seller.image,
-        customerType: seller.customerType,
-        adress: seller.adress,
-        idProof: seller.idProof,
-        products: seller.products,
-        productCategories: seller.productCategories,
-        requestedProducts: seller.requestedProducts,
-        status: 'Rejected',
-        rejection_reason: req.body.rejection_reason,
-      },
-      { new: true }
-    );
 
-    if (!updatedSeller) return res.status(400).send("the user cannot be created!");
+  const updatedSeller = await Seller.findByIdAndUpdate(
+    req.params.id,
+    {
+      name: seller.name,
+      email: seller.email,
+      passwordHash: seller.passwordHash,
+      phone: seller.phone,
+      image: seller.image,
+      customerType: seller.customerType,
+      adress: seller.adress,
+      idProof: seller.idProof,
+      products: seller.products,
+      productCategories: seller.productCategories,
+      requestedProducts: seller.requestedProducts,
+      status: "Rejected",
+      rejection_reason: req.body.rejection_reason,
+    },
+    { new: true }
+  );
 
-    res.send(updatedSeller);
+  if (!updatedSeller)
+    return res.status(400).send("the user cannot be created!");
+
+  res.send(updatedSeller);
 });
-
 
 module.exports = router;

@@ -37,33 +37,39 @@ const uploadOptions = multer({ storage: storage });
 // all request starts here
 
 router.post(`/`, uploadOptions.single("image"), async (req, res) => {
-  if (!mongoose.isValidObjectId(req.body.category)) {
-    return res.status(400).send("Invalid Product category");
+
+  let categoryArray = req.body.category.split(',')
+  
+  for(let item of categoryArray){
+    if (!mongoose.isValidObjectId(item)) {
+      return res.status(400).send("Invalid Product category");
+    }
+
+    const category = await Category.findById(item);
+    if (!category) return res.status(400).send("Invalid Category");
+  
+    const file = req.file;
+    if (!file) return res.status(400).send("No image in the request");
+  
+    const fileName = file.filename;
+    const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
+  
+    let product = new Product({
+      name: req.body.name,
+      description: req.body.description,
+      image: `${basePath}${fileName}`,
+      max_price: req.body.max_price,
+      category: item,
+      status: req.body.status,
+      reassigned_to: req.body.reassigned_to,
+    });
+  
+    product = await product.save();
+  
+    if (!product) return res.status(500).send("The product cannot be created");
   }
-  const category = await Category.findById(req.body.category);
-  if (!category) return res.status(400).send("Invalid Category");
-
-  const file = req.file;
-  if (!file) return res.status(400).send("No image in the request");
-
-  const fileName = file.filename;
-  const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
-
-  let product = new Product({
-    name: req.body.name,
-    description: req.body.description,
-    image: `${basePath}${fileName}`,
-    max_price: req.body.max_price,
-    category: req.body.category,
-    status: req.body.status,
-    reassigned_to: req.body.reassigned_to,
-  });
-
-  product = await product.save();
-
-  if (!product) return res.status(500).send("The product cannot be created");
-
-  res.send(product);
+ 
+   res.send('products added sucessfully');
 });
 
 //get products, also get by category
