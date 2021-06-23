@@ -17,7 +17,19 @@ const myItemSchema = mongoose.Schema({
      productCategory:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Category"
-     }
+     },
+     name: {
+        type: String,
+        required: true,
+    },
+    description: {
+        type: String,
+        required: true
+    },
+    image: {
+        type: String,
+        default: ''
+    }
 })
 
 

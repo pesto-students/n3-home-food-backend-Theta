@@ -26,11 +26,15 @@ const adminRoutes = require("./routes/admin");
 const categoriesRoutes = require("./routes/categories");
 const productsRoutes = require("./routes/products");
 const sellerRoutes = require("./routes/sellers");
+const cartRoutes = require("./routes/cart");
+const usersRoutes = require("./routes/users");
 
 app.use(`/${api}/admin`,adminRoutes);
 app.use(`/${api}/categories`, categoriesRoutes);
 app.use(`/${api}/products`, productsRoutes);
 app.use(`/${api}/sellers`, sellerRoutes);
+app.use(`/${api}/cart`,cartRoutes)
+app.use(`/${api}/users`, usersRoutes);
 
 
 //Database

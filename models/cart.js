@@ -1,0 +1,43 @@
+const mongoose = require('mongoose');
+
+
+const itemSchema = mongoose.Schema({
+    productId :{
+        type:mongoose.Schema. Types.ObjectId,
+        ref:"Product"
+    },
+    quantity:{
+        type:Number,
+        required:true,
+        min:[1,'Quantity cannot be less than 1']
+    },
+    price:{
+        type:Number,
+        required:true
+    },
+    total:{
+        type:Number,
+        required:true
+    }
+})
+
+
+const cartSchema = mongoose.Schema({
+
+    items: [itemSchema],
+    subTotal:{
+        type:Number,
+        default:0
+    }
+})
+
+
+cartSchema.virtual('id').get(function () {
+    return this._id.toHexString();
+});
+
+cartSchema.set('toJSON', {
+    virtuals: true,
+});
+
+exports.Cart = mongoose.model('Carts', cartSchema);

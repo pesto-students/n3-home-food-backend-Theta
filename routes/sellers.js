@@ -130,6 +130,33 @@ router.get(`/get/getproducts`, async (req, res) => {
         as: "productdetails",
       },
     },
+    { $project : { "status": 1 ,"productdetails":1} }
+  ])
+  console.log(sellerList);
+  if (!sellerList) {
+    res.status(500).json({ success: false });
+  }
+  res.send(sellerList);
+});
+
+
+// get products of sellers by category
+router.get(`/get/products-category-wise`, async (req, res) => {
+  console.log("filter", req);
+  let filter = mongoose.Types.ObjectId(req.query.sellerid);
+
+  const sellerList = await Seller.aggregate([
+    // { $match: {$and:[{ _id: filter },{myProducts.category :"60c906ce35453e14cd3f4ee3"} ]}},
+    { $match: { _id: filter }},
+    // {$match:{'name':'sahil'}},
+    {
+      $lookup: {
+        from: "products",
+        localField: "products",
+        foreignField: "_id",
+        as: "productdetails",
+      },
+    },
   ]);
   console.log(sellerList);
   if (!sellerList) {
@@ -221,6 +248,9 @@ router.put("/:id", async (req, res) => {
     quantity: 0,
     price: 0,
     productCategory: product.category,
+    name:product.name,
+    description:product.description,
+    image:product.image
   };
   userExist.myProducts.push(myProduct);
 
@@ -273,6 +303,9 @@ router.put("/update-product-quantitiy/:id", async (req, res) => {
         quantity: req.body.product_quantity,
         price: req.body.product_price,
         productCategory: item.category,
+        name:item.name,
+        description:item.description,
+        image:item.image
       };
 
       myProductsArray.push(myProduct)
@@ -360,6 +393,50 @@ router.put("/reject/:id", async (req, res) => {
       requestedProducts: seller.requestedProducts,
       status: "Rejected",
       rejection_reason: req.body.rejection_reason,
+    },
+    { new: true }
+  );
+
+  if (!updatedSeller)
+    return res.status(400).send("the user cannot be created!");
+
+  res.send(updatedSeller);
+});
+
+router.delete('/:id', (req, res)=>{
+  Seller.findByIdAndRemove(req.params.id).then(seller =>{
+      if(seller) {
+          return res.status(200).json({success: true, message: 'the seller is deleted!'})
+      } else {
+          return res.status(404).json({success: false , message: "seller not found!"})
+      }
+  }).catch(err=>{
+     return res.status(500).json({success: false, error: err})
+  })
+})
+
+// edit a seller
+router.put("/edit/:id", async (req, res) => {
+  const seller = await Seller.findById(req.params.id);
+  if (!seller) {
+    res.status(500).json({ success: false });
+  }
+
+  const updatedSeller = await Seller.findByIdAndUpdate(
+    req.params.id,
+    {
+      name: req.body.name,
+      email: seller.email,
+      phone: req.body.phone,
+      image: seller.image,
+      customerType: seller.customerType,
+      adress: req.body.adress,
+      idProof: seller.idProof,
+      products: seller.products,
+      productCategories: seller.productCategories,
+      requestedProducts: seller.requestedProducts,
+      status: "Approved",
+      rejection_reason: seller.rejection_reason,
     },
     { new: true }
   );
