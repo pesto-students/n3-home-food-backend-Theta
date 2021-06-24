@@ -29,6 +29,7 @@ const sellerRoutes = require("./routes/sellers");
 const cartRoutes = require("./routes/cart");
 const usersRoutes = require("./routes/users");
 const razorpayRoutes = require("./routes/razorpay");
+const ordersRoutes = require("./routes/orders");
 
 app.use(`/${api}/admin`,adminRoutes);
 app.use(`/${api}/categories`, categoriesRoutes);
@@ -37,7 +38,7 @@ app.use(`/${api}/sellers`, sellerRoutes);
 app.use(`/${api}/cart`,cartRoutes)
 app.use(`/${api}/users`, usersRoutes);
 app.use(`/${api}/razorpay`, razorpayRoutes);
-
+app.use(`/${api}/orders`, ordersRoutes);
 
 //Database
 mongoose
