@@ -55,7 +55,7 @@ router.post("/login", async (req, res) => {
 
     res
       .status(200)
-      .json({ success: true, token: token, userType: seller.customerType });
+      .json({ success: true, token: token, userType: seller.customerType ,id:seller.id });
   } else {
     res.status(400).send("Invalid Password");
   }
