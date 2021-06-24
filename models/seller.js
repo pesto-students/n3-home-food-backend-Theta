@@ -81,6 +81,17 @@ const sellerSchema = new mongoose.Schema({
     },
     rejection_reason:{
         type: String
+    },
+    description:{
+        type: String
+    },
+    rating:{
+        type:Number,
+        default:0
+    },
+    max_amount:{
+        type:Number,
+        default:0
     }
 
 

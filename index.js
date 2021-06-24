@@ -28,6 +28,7 @@ const productsRoutes = require("./routes/products");
 const sellerRoutes = require("./routes/sellers");
 const cartRoutes = require("./routes/cart");
 const usersRoutes = require("./routes/users");
+const razorpayRoutes = require("./routes/razorpay");
 
 app.use(`/${api}/admin`,adminRoutes);
 app.use(`/${api}/categories`, categoriesRoutes);
@@ -35,6 +36,7 @@ app.use(`/${api}/products`, productsRoutes);
 app.use(`/${api}/sellers`, sellerRoutes);
 app.use(`/${api}/cart`,cartRoutes)
 app.use(`/${api}/users`, usersRoutes);
+app.use(`/${api}/razorpay`, razorpayRoutes);
 
 
 //Database

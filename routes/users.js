@@ -3,7 +3,7 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const Secret = process.env.SECRET;
+const Secret = process.env.USER_SECRET;
 const mongoose = require("mongoose");
 
 router.get(`/`, async (req, res) => {
@@ -51,11 +51,17 @@ router.put("/:id", async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-  console.log(req.body.phone);
+  // check if the user exist
   const user = await User.findOne({ phone: req.body.phone });
-  if (!user) return res.status(400).send("No User Found");
+  if (!user){
+    // if not create a user and then login
+    let user = new User({
+      phone: req.body.phone,
+      customerType:'Customer'
+    });
+    user = await user.save();
+    if (!user) return res.status(400).send("the user cannot be created!");
 
-  if (req.body.phone === user.phone) {
     const token = jwt.sign(
       {
         userId: user.id,
@@ -64,11 +70,24 @@ router.post("/login", async (req, res) => {
       Secret,
       { expiresIn: "1w" }
     );
-
-    res.status(200).json({ success: true, token: token , userType : user.customerType });
-  } else {
-    res.status(400).send("Invalid Password");
+    res.status(200).json({ success: true, token: token , userType : user.customerType ,userId:user.id });
   }
+  else if(user){
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        customerType: user.customerType,
+      },
+      Secret,
+      { expiresIn: "1w" }
+    );
+    res.status(200).json({ success: true, token: token , userType : user.customerType ,userId:user.id});
+  }
+  else{
+    res.status(400).send("Sorry, we were unable to login!");
+  }
+
+
 });
 
 router.get(`/get/count`, async (req, res) => {

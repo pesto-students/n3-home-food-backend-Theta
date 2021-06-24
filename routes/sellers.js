@@ -130,7 +130,7 @@ router.get(`/get/getproducts`, async (req, res) => {
         as: "productdetails",
       },
     },
-    { $project : { "status": 1 ,"productdetails":1} }
+    { $project : { "status": 1 ,"name":1, "myProducts":1,"description":1,"max_amount":1,"rating":1} }
   ])
   console.log(sellerList);
   if (!sellerList) {
@@ -199,6 +199,7 @@ router.post("/register", async (req, res) => {
     phone: req.body.phone,
     adress: req.body.adress,
     idProof: req.body.idProof,
+    description:req.body.description
   });
   seller = await seller.save();
 
@@ -261,6 +262,8 @@ router.put("/:id", async (req, res) => {
     }
   }
 
+
+
   const user = await Seller.findByIdAndUpdate(
     req.params.id,
     {
@@ -277,6 +280,7 @@ router.put("/:id", async (req, res) => {
       requestedProducts: userExist.requestedProducts,
       status: "Approved",
       rejection_reason: userExist.rejection_reason,
+      description:userExist.description
     },
     { new: true }
   );
@@ -291,9 +295,14 @@ router.put("/update-product-quantitiy/:id", async (req, res) => {
   const userExist = await Seller.findById(req.params.id);
 
   // userExist.myProducts.push(myProduct);
-
+let max_price_seller = 0
   let myProductsArray = []
+  console.log(userExist.myProducts)
   for (let item of userExist.myProducts) {
+    if(item.max_price > max_price_seller){
+      max_price_seller = item.max_price
+      console.log(max_price_seller,item.max_price)
+    }
     if (req.body.productid.toString() === item.productId.toString()) {
       // we got our product to be edited, now edit it
 
@@ -313,7 +322,10 @@ router.put("/update-product-quantitiy/:id", async (req, res) => {
     }
   }
 
-  const user = await Seller.findByIdAndUpdate(
+
+
+  const user = await Seller.findByIdAndUpdate(// add products to seller and also update category
+
     req.params.id,
     {
       name: userExist.name,
@@ -329,6 +341,9 @@ router.put("/update-product-quantitiy/:id", async (req, res) => {
       requestedProducts: userExist.requestedProducts,
       status: "Approved",
       rejection_reason: userExist.rejection_reason,
+      max_amount:max_price_seller,
+      rating:userExist.rating,
+      description:userExist.description
     },
     { new: true }
   );
