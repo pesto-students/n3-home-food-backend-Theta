@@ -81,7 +81,7 @@ router.post("/login", async (req, res) => {
       Secret,
       { expiresIn: "1w" }
     );
-    res.status(200).json({ success: true, token: token , userType : user.customerType ,userId:user.id});
+    res.status(200).json({ success: true, token: token , userType : user.customerType ,id:user.id});
   }
   else{
     res.status(400).send("Sorry, we were unable to login!");
