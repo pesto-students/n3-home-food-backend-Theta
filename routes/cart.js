@@ -38,6 +38,7 @@ router.post(`/`, async (req, res) => {
 
 
   let productDetails = await Product.findById(productId);
+  console.log('product',productDetails)
   if (!productDetails) {
     return res.status(500).json({
       type: "Not Found",

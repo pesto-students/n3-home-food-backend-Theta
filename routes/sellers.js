@@ -451,6 +451,7 @@ router.put("/edit/:id", async (req, res) => {
       adress: req.body.adress,
       idProof: seller.idProof,
       products: seller.products,
+      myProducts: seller.myProducts,
       productCategories: seller.productCategories,
       requestedProducts: seller.requestedProducts,
       status: "Approved",
@@ -464,5 +465,43 @@ router.put("/edit/:id", async (req, res) => {
 
   res.send(updatedSeller);
 });
+
+
+// delete a product id from seller
+router.put("/delete-product/:id", async (req, res) => {
+  const seller = await Seller.findById(req.params.id);
+  if (!seller) {
+    res.status(500).json({ success: false });
+  }
+
+
+  seller.myProducts = seller.myProducts.filter(element => element._id.toString() !== req.body.productId )
+console.log(seller.myProducts )
+  const updatedSeller = await Seller.findByIdAndUpdate(
+    req.params.id,
+    {
+      name: req.body.name,
+      email: seller.email,
+      phone: req.body.phone,
+      image: seller.image,
+      customerType: seller.customerType,
+      adress: req.body.adress,
+      idProof: seller.idProof,
+      products: seller.products,
+      myProducts: seller.myProducts,
+      productCategories: seller.productCategories,
+      requestedProducts: seller.requestedProducts,
+      status: "Approved",
+      rejection_reason: seller.rejection_reason,
+    },
+    { new: true }
+  );
+
+  if (!updatedSeller)
+    return res.status(400).send("the user cannot be created!");
+
+  res.send(updatedSeller);
+});
+
 
 module.exports = router;
