@@ -14,10 +14,10 @@ const myItemSchema = mongoose.Schema({
         type:Number,
         default:0
      } ,
-     productCategory:{
+     productCategory:[{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Category"
-     },
+     }],
      name: {
         type: String,
         required: true,

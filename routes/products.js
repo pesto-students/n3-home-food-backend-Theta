@@ -37,24 +37,23 @@ const uploadOptions = multer({ storage: storage });
 // all request starts here
 
 router.post(`/`, uploadOptions.single("image"), async (req, res) => {
+  let categoryArray = req.body.category.split(",");
 
-  let categoryArray = req.body.category.split(',')
-  
   // multiple products get added  with diffrent category
-  for(let item of categoryArray){
+  for (let item of categoryArray) {
     if (!mongoose.isValidObjectId(item)) {
       return res.status(400).send("Invalid Product category");
     }
 
     const category = await Category.findById(item);
     if (!category) return res.status(400).send("Invalid Category");
-  
+
     const file = req.file;
     if (!file) return res.status(400).send("No image in the request");
-  
+
     const fileName = file.filename;
     const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
-  
+
     let product = new Product({
       name: req.body.name,
       description: req.body.description,
@@ -64,13 +63,37 @@ router.post(`/`, uploadOptions.single("image"), async (req, res) => {
       status: req.body.status,
       reassigned_to: req.body.reassigned_to,
     });
-  
+
     product = await product.save();
-  
+
     if (!product) return res.status(500).send("The product cannot be created");
   }
- 
-   res.send('products added sucessfully');
+
+  res.send("products added sucessfully");
+});
+
+//admin will add product withouth category
+router.post(`/admin`, uploadOptions.single("image"), async (req, res) => {
+  const file = req.file;
+  if (!file) return res.status(400).send("No image in the request");
+
+  const fileName = file.filename;
+  const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
+
+  let product = new Product({
+    name: req.body.name,
+    description: req.body.description,
+    image: `${basePath}${fileName}`,
+    max_price: req.body.max_price,
+    status: req.body.status,
+    reassigned_to: req.body.reassigned_to,
+  });
+
+  product = await product.save();
+
+  if (!product) return res.status(500).send("The product cannot be created");
+
+  res.send("products added sucessfully");
 });
 
 //get products, also get by category
@@ -140,21 +163,18 @@ router.put("/:id", uploadOptions.single("image"), async (req, res) => {
   res.send(updatedProduct);
 });
 
-
-
-// Appove pending products 
+// Appove pending products
 router.put("/product-approval/:id", async (req, res) => {
-  console.log('req.body.productId',req.params.id)
+  console.log("req.body.productId", req.params.id);
   if (!mongoose.isValidObjectId(req.params.id)) {
     return res.status(400).send("Invalid Product Id");
   }
 
-  if(!req.body.max_price) return res.status(400).send("Max Price of product is required!");
+  if (!req.body.max_price)
+    return res.status(400).send("Max Price of product is required!");
 
   const product = await Product.findById(req.params.id);
   if (!product) return res.status(400).send("Invalid Product!");
-
-
 
   const updatedProduct = await Product.findByIdAndUpdate(
     req.params.id,
@@ -176,22 +196,18 @@ router.put("/product-approval/:id", async (req, res) => {
   res.send(updatedProduct);
 });
 
-
-
-
-// Reject pending products 
+// Reject pending products
 router.put("/product-rejection/:id", async (req, res) => {
-  console.log('req.body.productId',req.params.id)
+  console.log("req.body.productId", req.params.id);
   if (!mongoose.isValidObjectId(req.params.id)) {
     return res.status(400).send("Invalid Product Id");
   }
 
-  if(!req.body.rejection_reason) return res.status(400).send("Reason for Rejection is required!");
+  if (!req.body.rejection_reason)
+    return res.status(400).send("Reason for Rejection is required!");
 
   const product = await Product.findById(req.params.id);
   if (!product) return res.status(400).send("Invalid Product!");
-
-
 
   const updatedProduct = await Product.findByIdAndUpdate(
     req.params.id,
@@ -202,7 +218,7 @@ router.put("/product-rejection/:id", async (req, res) => {
       max_price: product.max_price,
       category: product.category,
       status: "Rejected",
-      rejection_reason: req.body.rejection_reason
+      rejection_reason: req.body.rejection_reason,
     },
     { new: true }
   );
@@ -231,24 +247,21 @@ router.delete("/:id", (req, res) => {
     });
 });
 
-
-
-// Reassign product if similar already exist 
+// Reassign product if similar already exist
 router.put("/product-reassign/:id", async (req, res) => {
-  console.log('req.body.productId',req.params.id)
+  console.log("req.body.productId", req.params.id);
   if (!mongoose.isValidObjectId(req.params.id)) {
     return res.status(400).send("Invalid Product Id");
   }
 
-  if(!req.body.existingProductId) return res.status(400).send("Product which will be assigned is required!");
+  if (!req.body.existingProductId)
+    return res.status(400).send("Product which will be assigned is required!");
   if (!mongoose.isValidObjectId(req.body.existingProductId)) {
     return res.status(400).send("Product which will be assigned is invalid");
   }
 
   const product = await Product.findById(req.params.id);
   if (!product) return res.status(400).send("Invalid Product!");
-
-
 
   const updatedProduct = await Product.findByIdAndUpdate(
     req.params.id,
@@ -269,7 +282,6 @@ router.put("/product-reassign/:id", async (req, res) => {
 
   res.send(updatedProduct);
 });
-
 
 // get approved products, also by category
 router.get(`/get/approved`, async (req, res) => {
@@ -296,7 +308,6 @@ router.get(`/get/approved`, async (req, res) => {
   res.send(productList);
 });
 
-
 // get pending products, also by category
 router.get(`/get/pending`, async (req, res) => {
   let filter = {};
@@ -322,7 +333,6 @@ router.get(`/get/pending`, async (req, res) => {
   res.send(productList);
 });
 
-
 router.get(`/get/count`, async (req, res) => {
   const productCount = await Product.countDocuments((count) => count);
 
@@ -334,16 +344,22 @@ router.get(`/get/count`, async (req, res) => {
   });
 });
 
-router.delete('/:id', (req, res)=>{
-    Product.findByIdAndRemove(req.params.id).then(product =>{
-        if(product) {
-            return res.status(200).json({success: true, message: 'the product is deleted!'})
-        } else {
-            return res.status(404).json({success: false , message: "product not found!"})
-        }
-    }).catch(err=>{
-       return res.status(500).json({success: false, error: err})
+router.delete("/:id", (req, res) => {
+  Product.findByIdAndRemove(req.params.id)
+    .then((product) => {
+      if (product) {
+        return res
+          .status(200)
+          .json({ success: true, message: "the product is deleted!" });
+      } else {
+        return res
+          .status(404)
+          .json({ success: false, message: "product not found!" });
+      }
     })
-})
+    .catch((err) => {
+      return res.status(500).json({ success: false, error: err });
+    });
+});
 
 module.exports = router;

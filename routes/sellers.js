@@ -119,19 +119,21 @@ router.get(`/get/getproducts`, async (req, res) => {
   console.log("filter", req);
   let filter = mongoose.Types.ObjectId(req.query.sellerid);
 
-  const sellerList = await Seller.aggregate([
-    { $match: { _id: filter } },
-    // {$match:{'name':'sahil'}},
-    {
-      $lookup: {
-        from: "products",
-        localField: "products",
-        foreignField: "_id",
-        as: "productdetails",
-      },
-    },
-    { $project : { "status": 1 ,"name":1, "myProducts":1,"description":1,"max_amount":1,"rating":1} }
-  ])
+  // const sellerList = await Seller.aggregate([
+  //   { $match: { _id: filter } },
+  //   // {$match:{'name':'sahil'}},
+  //   {
+  //     $lookup: {
+  //       from: "products",
+  //       localField: "products",
+  //       foreignField: "_id",
+  //       as: "productdetails",
+  //     },
+  //   },
+  //   { $project : { "status": 1 ,"name":1, "myProducts":1,"description":1,"max_amount":1,"rating":1} }
+  // ])
+
+  const sellerList = await Seller.find({_id:filter}).populate({path:'myProducts',populate: 'productCategory'}).select( { "status": 1 ,"name":1, "myProducts":1,"description":1,"max_amount":1,"rating":1})
   console.log(sellerList);
   if (!sellerList) {
     res.status(500).json({ success: false });
@@ -242,19 +244,20 @@ router.put("/:id", async (req, res) => {
   productsArray = productsArray.concat(req.body.products);
   categoryArray = userExist.productCategories;
 
-  console.log("product", product.category);
   // create a my products
   const myProduct = {
     productId: product.id,
     quantity: 0,
     price: 0,
-    productCategory: product.category,
+    productCategory: req.body.category,
     name:product.name,
     description:product.description,
-    image:product.image
+    image:product.image,
   };
-  userExist.myProducts.push(myProduct);
 
+
+  userExist.myProducts.push(myProduct);
+  console.log("product", userExist.myProducts);
   // check if the exist product array has cateogry of the new product we are adding
   for (let item of product.category) {
     if (!categoryArray.includes(item)) {
