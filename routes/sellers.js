@@ -43,7 +43,7 @@ router.post("/login", async (req, res) => {
   const seller = await Seller.findOne({ phone: req.body.phone });
   if (!seller) return res.status(400).send("No Seller Found");
 
-  if (req.body.phone === seller.phone) {
+  if (req.body.phone === seller.phone && seller.status == 'Approved' ) {
     const token = jwt.sign(
       {
         userId: seller.id,
@@ -57,7 +57,7 @@ router.post("/login", async (req, res) => {
       .status(200)
       .json({ success: true, token: token, userType: seller.customerType ,id:seller.id });
   } else {
-    res.status(400).send("Invalid Password");
+    res.status(400).send("Invalid phone or you dont have access to seller panel");
   }
 });
 
