@@ -7,6 +7,7 @@ const validateTokenAdmin = require("../config/jwt");
 const secret = process.env.SELLER_SECRET;
 const { Product } = require("../models/product");
 const mongoose = require("mongoose");
+const { Order } = require("../models/order");
 
 // image upload configuration
 
@@ -75,6 +76,39 @@ router.get(`/`, async (req, res) => {
   if (!sellerList) {
     res.status(500).json({ success: false });
   }
+
+
+
+  // get only rated sellers array
+
+
+
+  for (let item of sellerList) {
+    const OrderList = await Order.aggregate([
+      { $match: {sellerDetails: new mongoose.Types.ObjectId(item.id)} },
+      {
+        $group: {
+          _id: "$sellerDetails",
+          Orders: { $push: "$_id" },
+          totalPrice: { $sum: "$rating" },
+          count: {
+            $sum: 1
+        }      }
+      },
+      {
+        $addFields:{
+          avgRating: { $divide: [ "$totalPrice", 5 ] }
+        }
+     }
+    ]);
+  
+    if (OrderList) {
+      item.rating = OrderList[0].avgRating
+    }
+  console.log(OrderList)
+  }
+  
+
   res.send(sellerList);
 });
 
@@ -85,6 +119,32 @@ router.get(`/:id`, async (req, res) => {
   if (!seller) {
     res.status(500).json({ success: false });
   }
+
+  // get seller rating 
+  const OrderList = await Order.aggregate([
+    { $match: {sellerDetails: new mongoose.Types.ObjectId(req.params.id)} },
+    {
+      $group: {
+        _id: "$sellerDetails",
+        Orders: { $push: "$_id" },
+        totalPrice: { $sum: "$rating" },
+        count: {
+          $sum: 1
+      }      }
+    },
+    {
+      $addFields:{
+        avgRating: { $divide: [ "$totalPrice", 5 ] }
+      }
+   }
+  ]);
+
+  if (!OrderList) {
+    res.status(500).json({ success: false });
+  }
+  seller.rating = OrderList[0].avgRating
+
+
   res.send(seller);
 });
 

@@ -187,7 +187,6 @@ router.put("/rate/:id", async (req, res) => {
 // get seller rating (group the sellers and send average rating)
 router.get("/seller-rating/:id", async (req, res) => {
   
-  const orderList = await Order.findById(req.params.id)
   const OrderList = await Order.aggregate([
     { $match: {sellerDetails: new mongoose.Types.ObjectId(req.params.id)} },
     {
