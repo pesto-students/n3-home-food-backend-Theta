@@ -54,14 +54,12 @@ router.post("/login", async (req, res) => {
       { expiresIn: "1w" }
     );
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        token: token,
-        userType: seller.customerType,
-        id: seller.id,
-      });
+    res.status(200).json({
+      success: true,
+      token: token,
+      userType: seller.customerType,
+      id: seller.id,
+    });
   } else {
     res
       .status(400)
@@ -77,37 +75,33 @@ router.get(`/`, async (req, res) => {
     res.status(500).json({ success: false });
   }
 
-
-
   // get only rated sellers array
-
-
 
   for (let item of sellerList) {
     const OrderList = await Order.aggregate([
-      { $match: {sellerDetails: new mongoose.Types.ObjectId(item.id)} },
+      { $match: { sellerDetails: new mongoose.Types.ObjectId(item.id) } },
       {
         $group: {
           _id: "$sellerDetails",
           Orders: { $push: "$_id" },
           totalPrice: { $sum: "$rating" },
           count: {
-            $sum: 1
-        }      }
+            $sum: 1,
+          },
+        },
       },
       {
-        $addFields:{
-          avgRating: { $divide: [ "$totalPrice", 5 ] }
-        }
-     }
+        $addFields: {
+          avgRating: { $divide: ["$totalPrice", 5] },
+        },
+      },
     ]);
-  
+
     if (OrderList) {
-      item.rating = OrderList[0].avgRating
+      item.rating = OrderList[0].avgRating;
     }
-  console.log(OrderList)
+    console.log(OrderList);
   }
-  
 
   res.send(sellerList);
 });
@@ -120,30 +114,30 @@ router.get(`/:id`, async (req, res) => {
     res.status(500).json({ success: false });
   }
 
-  // get seller rating 
+  // get seller rating
   const OrderList = await Order.aggregate([
-    { $match: {sellerDetails: new mongoose.Types.ObjectId(req.params.id)} },
+    { $match: { sellerDetails: new mongoose.Types.ObjectId(req.params.id) } },
     {
       $group: {
         _id: "$sellerDetails",
         Orders: { $push: "$_id" },
         totalPrice: { $sum: "$rating" },
         count: {
-          $sum: 1
-      }      }
+          $sum: 1,
+        },
+      },
     },
     {
-      $addFields:{
-        avgRating: { $divide: [ "$totalPrice", 5 ] }
-      }
-   }
+      $addFields: {
+        avgRating: { $divide: ["$totalPrice", 5] },
+      },
+    },
   ]);
 
   if (!OrderList) {
     res.status(500).json({ success: false });
   }
-  seller.rating = OrderList[0].avgRating
-
+  seller.rating = OrderList[0].avgRating;
 
   res.send(seller);
 });
@@ -210,7 +204,34 @@ router.get(`/get/getproducts`, async (req, res) => {
       max_amount: 1,
       rating: 1,
     });
-  console.log(sellerList);
+
+  // get seller rating
+  const OrderList = await Order.aggregate([
+    {
+      $match: {
+        sellerDetails: new mongoose.Types.ObjectId(sellerList[0]._id),
+      },
+    },
+    {
+      $group: {
+        _id: "$sellerDetails",
+        Orders: { $push: "$_id" },
+        totalPrice: { $sum: "$rating" },
+        count: {
+          $sum: 1,
+        },
+      },
+    },
+    {
+      $addFields: {
+        avgRating: { $divide: ["$totalPrice", 5] },
+      },
+    },
+  ]);
+
+console.log(sellerList ,OrderList)
+  sellerList[0].rating = OrderList[0].avgRating;
+
   if (!sellerList) {
     res.status(500).json({ success: false });
   }
@@ -383,8 +404,8 @@ router.put("/update-product-quantitiy/:id", async (req, res) => {
     }
   }
 
-
-  const user = await Seller.findByIdAndUpdate(// add products to seller and also update category
+  const user = await Seller.findByIdAndUpdate(
+    // add products to seller and also update category
 
     req.params.id,
     {
@@ -401,9 +422,9 @@ router.put("/update-product-quantitiy/:id", async (req, res) => {
       requestedProducts: userExist.requestedProducts,
       status: "Approved",
       rejection_reason: userExist.rejection_reason,
-      max_amount:max_price_seller,
-      rating:userExist.rating,
-      description:userExist.description
+      max_amount: max_price_seller,
+      rating: userExist.rating,
+      description: userExist.description,
     },
     { new: true }
   );
@@ -436,7 +457,6 @@ router.put("/approve/:id", async (req, res) => {
       status: "Approved",
       rejection_reason: seller.rejection_reason,
       description: seller.description,
-
     },
     { new: true }
   );
@@ -471,7 +491,6 @@ router.put("/reject/:id", async (req, res) => {
       status: "Rejected",
       rejection_reason: req.body.rejection_reason,
       description: seller.description,
-
     },
     { new: true }
   );
@@ -504,12 +523,20 @@ router.delete("/:id", (req, res) => {
 router.put("/edit/:id", async (req, res) => {
   const seller = await Seller.findById(req.params.id);
   if (!seller) {
-   return res.status(500).json({ success: false });
+    return res.status(500).json({ success: false });
   }
 
-  console.log(seller,req.body)
+  console.log(seller, req.body);
 
-  if(!(req.body.name && req.body.phone && req.body.description && req.body.image && req.body.adress)){
+  if (
+    !(
+      req.body.name &&
+      req.body.phone &&
+      req.body.description &&
+      req.body.image &&
+      req.body.adress
+    )
+  ) {
     return res.status(500).json({ success: false });
   }
 
@@ -529,7 +556,6 @@ router.put("/edit/:id", async (req, res) => {
       status: "Approved",
       rejection_reason: seller.rejection_reason,
       description: seller.description,
-
     },
     { new: true }
   );
@@ -568,7 +594,6 @@ router.put("/delete-product/:id", async (req, res) => {
       status: "Approved",
       rejection_reason: seller.rejection_reason,
       description: seller.description,
-
     },
     { new: true }
   );
