@@ -124,6 +124,7 @@ router.put("/:id", async (req, res) => {
 
 
 router.put("/approve-order/:orderId", async (req, res) => {
+  
   const order = await Order.findByIdAndUpdate(
     req.params.orderId,
     {
@@ -131,7 +132,7 @@ router.put("/approve-order/:orderId", async (req, res) => {
     },
     { new: true }
   );
-
+    console.log(order)
   if (!order) return res.status(400).send("the order cannot be update!");
 
   res.send(order);
@@ -158,16 +159,55 @@ router.delete("/:id", (req, res) => {
     });
 });
 
-router.get("/get/totalsales", async (req, res) => {
-  const totalSales = await Order.aggregate([
-    { $group: { _id: null, totalsales: { $sum: "$totalPrice" } } },
+
+// rate a order
+router.put("/rate/:id", async (req, res) => {
+  const orderList = await Order.findById(req.params.id)
+  console.log(orderList)
+
+  const order = await Order.findByIdAndUpdate(
+    req.params.id,
+    {
+      rating: req.body.rating,
+      rated:true
+    },
+    { new: true }
+  );
+
+  console.log(order)
+  if (!order) return res.status(400).send("the order cannot be rated!");
+
+  res.send(order);
+});
+
+
+
+// get seller rating (group the sellers and send average rating)
+router.get("/seller-rating/:id", async (req, res) => {
+  
+  const orderList = await Order.findById(req.params.id)
+  const OrderList = await Order.aggregate([
+    { $match: {sellerDetails: new mongoose.Types.ObjectId(req.params.id)} },
+    {
+      $group: {
+        _id: "$sellerDetails",
+        Orders: { $push: "$_id" },
+        totalPrice: { $sum: "$rating" },
+        count: {
+          $sum: 1
+      }      }
+    },
+    {
+      $addFields:{
+        avgRating: { $divide: [ "$totalPrice", 5 ] }
+      }
+   }
   ]);
 
-  if (!totalSales) {
-    return res.status(400).send("The order sales cannot be generated");
+  if (!OrderList) {
+    res.status(500).json({ success: false });
   }
-
-  res.send({ totalsales: totalSales.pop().totalsales });
+  res.send(OrderList);
 });
 
 router.get(`/get/count`, async (req, res) => {

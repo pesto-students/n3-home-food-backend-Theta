@@ -29,6 +29,14 @@ const orderSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
     },
+    rating: {
+        type: Number,
+        default:0
+    },
+    rated:{
+        type:Boolean,
+        default:false
+    },
     dateOrdered: {
         type: Date,
         default: Date.now,
