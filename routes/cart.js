@@ -21,8 +21,9 @@ router.get(`/:id`, async (req, res) => {
 
   const user = await User.findById(req.params.id).select({cart:1})
   if(!user) res.status(500).json({success:false})
-
-  const cart = await Cart.findById(user.cart).populate({path:'items',populate:'productId'})
+  
+  // const cart = await Cart.findById(user.cart).populate({path:'items',populate:'productId'})
+  const cart = await Cart.findById(user.cart)
   if(!cart) res.status(500).json({ items:[] })
 
 
@@ -33,6 +34,7 @@ router.post(`/`, async (req, res) => {
   const productId = req.body.productId;
   const quantity = req.body.quantity;
   const userId = req.body.userId;
+  const price = req.body.price;
 
 
 
@@ -67,8 +69,8 @@ router.post(`/`, async (req, res) => {
             const product = {
                 productId: productId,
                 quantity: quantity,
-                price: productDetails.max_price,
-                total: parseInt(productDetails.max_price * quantity)
+                price: price,
+                total: parseInt(price * quantity)
             }
             cart.items.push(product)
             // get new subtototal
@@ -93,8 +95,8 @@ router.post(`/`, async (req, res) => {
 
         // cart.items[indexFound].quantity = cart.items[indexFound].quantity +1
         cart.items[indexFound].quantity = quantity
-        cart.items[indexFound].price = productDetails.max_price
-        cart.items[indexFound].total =  parseInt(productDetails.max_price * quantity)
+        cart.items[indexFound].price = price
+        cart.items[indexFound].total =  parseInt(price * quantity)
         cart.subTotal = cart.items.map(item => item.total).reduce((acc, next) => acc + next);
 
     }
@@ -109,11 +111,11 @@ router.post(`/`, async (req, res) => {
         {
           productId: productId,
           quantity: quantity,
-          price: productDetails.max_price,
-          total: parseInt(productDetails.max_price * quantity)
+          price: price,
+          total: parseInt(price * quantity)
         },
       ],
-      subTotal: Number(productDetails.max_price) * Number(quantity),
+      subTotal: Number(price) * Number(quantity),
     });
 
     cart = await cartData.save();

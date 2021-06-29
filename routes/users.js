@@ -101,4 +101,29 @@ router.get(`/get/count`, async (req, res) => {
   });
 });
 
+
+router.put(`/remove-cart/:id`, async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.status(400).send("Invalid Customer Id");
+  }
+
+  const user = await User.findById(req.params.id);
+
+
+  const updatedUser = await User.findByIdAndUpdate(
+    user.id,
+    {
+      cart:null
+    },
+    { new: true }
+  );
+  console.log(updatedUser)
+  if (!updatedUser)
+    return res.status(400).send("the user cannot be updated!");
+
+  res.send(user);
+});
+
+
+
 module.exports = router;

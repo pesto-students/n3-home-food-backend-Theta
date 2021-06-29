@@ -43,7 +43,7 @@ router.post("/login", async (req, res) => {
   const seller = await Seller.findOne({ phone: req.body.phone });
   if (!seller) return res.status(400).send("No Seller Found");
 
-  if (req.body.phone === seller.phone && seller.status == 'Approved' ) {
+  if (req.body.phone === seller.phone && seller.status == "Approved") {
     const token = jwt.sign(
       {
         userId: seller.id,
@@ -55,9 +55,16 @@ router.post("/login", async (req, res) => {
 
     res
       .status(200)
-      .json({ success: true, token: token, userType: seller.customerType ,id:seller.id });
+      .json({
+        success: true,
+        token: token,
+        userType: seller.customerType,
+        id: seller.id,
+      });
   } else {
-    res.status(400).send("Invalid phone or you dont have access to seller panel");
+    res
+      .status(400)
+      .send("Invalid phone or you dont have access to seller panel");
   }
 });
 
@@ -133,14 +140,22 @@ router.get(`/get/getproducts`, async (req, res) => {
   //   { $project : { "status": 1 ,"name":1, "myProducts":1,"description":1,"max_amount":1,"rating":1} }
   // ])
 
-  const sellerList = await Seller.find({_id:filter}).populate({path:'myProducts',populate: 'productCategory'}).select( { "status": 1 ,"name":1, "myProducts":1,"description":1,"max_amount":1,"rating":1})
+  const sellerList = await Seller.find({ _id: filter })
+    .populate({ path: "myProducts", populate: "productCategory" })
+    .select({
+      status: 1,
+      name: 1,
+      myProducts: 1,
+      description: 1,
+      max_amount: 1,
+      rating: 1,
+    });
   console.log(sellerList);
   if (!sellerList) {
     res.status(500).json({ success: false });
   }
   res.send(sellerList);
 });
-
 
 // get products of sellers by category
 router.get(`/get/products-category-wise`, async (req, res) => {
@@ -149,7 +164,7 @@ router.get(`/get/products-category-wise`, async (req, res) => {
 
   const sellerList = await Seller.aggregate([
     // { $match: {$and:[{ _id: filter },{myProducts.category :"60c906ce35453e14cd3f4ee3"} ]}},
-    { $match: { _id: filter }},
+    { $match: { _id: filter } },
     // {$match:{'name':'sahil'}},
     {
       $lookup: {
@@ -201,7 +216,7 @@ router.post("/register", async (req, res) => {
     phone: req.body.phone,
     adress: req.body.adress,
     idProof: req.body.idProof,
-    description:req.body.description
+    description: req.body.description,
   });
   seller = await seller.save();
 
@@ -250,22 +265,19 @@ router.put("/:id", async (req, res) => {
     quantity: 0,
     price: 0,
     productCategory: req.body.category,
-    name:product.name,
-    description:product.description,
-    image:product.image,
+    name: product.name,
+    description: product.description,
+    image: product.image,
   };
-
 
   userExist.myProducts.push(myProduct);
   console.log("product", userExist.myProducts);
   // check if the exist product array has cateogry of the new product we are adding
-  for (let item of product.category) {
+  for (let item of req.body.category) {
     if (!categoryArray.includes(item)) {
       categoryArray.push(item);
     }
   }
-
-
 
   const user = await Seller.findByIdAndUpdate(
     req.params.id,
@@ -283,7 +295,7 @@ router.put("/:id", async (req, res) => {
       requestedProducts: userExist.requestedProducts,
       status: "Approved",
       rejection_reason: userExist.rejection_reason,
-      description:userExist.description
+      description: userExist.description,
     },
     { new: true }
   );
@@ -298,33 +310,18 @@ router.put("/update-product-quantitiy/:id", async (req, res) => {
   const userExist = await Seller.findById(req.params.id);
 
   // userExist.myProducts.push(myProduct);
-let max_price_seller = 0
-  let myProductsArray = []
-  console.log(userExist.myProducts)
-  for (let item of userExist.myProducts) {
-    if(item.max_price > max_price_seller){
-      max_price_seller = item.max_price
-      console.log(max_price_seller,item.max_price)
-    }
+  let max_price_seller = 0;
+
+  let myProductsArray = userExist.myProducts;
+  for (let item of myProductsArray) {
     if (req.body.productid.toString() === item.productId.toString()) {
       // we got our product to be edited, now edit it
 
-      // create a my products
-      const myProduct = {
-        productId: item.id,
-        quantity: req.body.product_quantity,
-        price: req.body.product_price,
-        productCategory: item.category,
-        name:item.name,
-        description:item.description,
-        image:item.image
-      };
-
-      myProductsArray.push(myProduct)
-
+      (item.quantity = req.body.product_quantity),
+        (item.price = req.body.product_price),
+        (item.productCategory = req.body.category);
     }
   }
-
 
 
   const user = await Seller.findByIdAndUpdate(// add products to seller and also update category
@@ -378,6 +375,8 @@ router.put("/approve/:id", async (req, res) => {
       requestedProducts: seller.requestedProducts,
       status: "Approved",
       rejection_reason: seller.rejection_reason,
+      description: seller.description,
+
     },
     { new: true }
   );
@@ -411,6 +410,8 @@ router.put("/reject/:id", async (req, res) => {
       requestedProducts: seller.requestedProducts,
       status: "Rejected",
       rejection_reason: req.body.rejection_reason,
+      description: seller.description,
+
     },
     { new: true }
   );
@@ -421,30 +422,41 @@ router.put("/reject/:id", async (req, res) => {
   res.send(updatedSeller);
 });
 
-router.delete('/:id', (req, res)=>{
-  Seller.findByIdAndRemove(req.params.id).then(seller =>{
-      if(seller) {
-          return res.status(200).json({success: true, message: 'the seller is deleted!'})
+router.delete("/:id", (req, res) => {
+  Seller.findByIdAndRemove(req.params.id)
+    .then((seller) => {
+      if (seller) {
+        return res
+          .status(200)
+          .json({ success: true, message: "the seller is deleted!" });
       } else {
-          return res.status(404).json({success: false , message: "seller not found!"})
+        return res
+          .status(404)
+          .json({ success: false, message: "seller not found!" });
       }
-  }).catch(err=>{
-     return res.status(500).json({success: false, error: err})
-  })
-})
+    })
+    .catch((err) => {
+      return res.status(500).json({ success: false, error: err });
+    });
+});
 
 // edit a seller
 router.put("/edit/:id", async (req, res) => {
   const seller = await Seller.findById(req.params.id);
   if (!seller) {
-    res.status(500).json({ success: false });
+   return res.status(500).json({ success: false });
+  }
+
+  console.log(seller,req.body)
+
+  if(!(req.body.name && req.body.phone && req.body.description && req.body.image && req.body.adress)){
+    return res.status(500).json({ success: false });
   }
 
   const updatedSeller = await Seller.findByIdAndUpdate(
     req.params.id,
     {
       name: req.body.name,
-      email: seller.email,
       phone: req.body.phone,
       image: seller.image,
       customerType: seller.customerType,
@@ -456,6 +468,8 @@ router.put("/edit/:id", async (req, res) => {
       requestedProducts: seller.requestedProducts,
       status: "Approved",
       rejection_reason: seller.rejection_reason,
+      description: seller.description,
+
     },
     { new: true }
   );
@@ -465,7 +479,6 @@ router.put("/edit/:id", async (req, res) => {
 
   res.send(updatedSeller);
 });
-
 
 // delete a product id from seller
 router.put("/delete-product/:id", async (req, res) => {
@@ -474,18 +487,19 @@ router.put("/delete-product/:id", async (req, res) => {
     res.status(500).json({ success: false });
   }
 
-
-  seller.myProducts = seller.myProducts.filter(element => element._id.toString() !== req.body.productId )
-console.log(seller.myProducts )
+  seller.myProducts = seller.myProducts.filter(
+    (element) => element._id.toString() !== req.body.productId
+  );
+  console.log(seller.myProducts);
   const updatedSeller = await Seller.findByIdAndUpdate(
     req.params.id,
     {
-      name: req.body.name,
+      name: seller.name,
       email: seller.email,
-      phone: req.body.phone,
+      phone: seller.phone,
       image: seller.image,
       customerType: seller.customerType,
-      adress: req.body.adress,
+      adress: seller.adress,
       idProof: seller.idProof,
       products: seller.products,
       myProducts: seller.myProducts,
@@ -493,6 +507,8 @@ console.log(seller.myProducts )
       requestedProducts: seller.requestedProducts,
       status: "Approved",
       rejection_reason: seller.rejection_reason,
+      description: seller.description,
+
     },
     { new: true }
   );
@@ -502,6 +518,5 @@ console.log(seller.myProducts )
 
   res.send(updatedSeller);
 });
-
 
 module.exports = router;

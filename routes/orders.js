@@ -2,14 +2,17 @@ const { Order } = require("../models/order");
 const express = require("express");
 const { User } = require("../models/user");
 const { Cart } = require("../models/cart");
+const { moment } = require("moment");
+const mongoose = require('mongoose');
 
 const router = express.Router();
 
 router.get(`/`, async (req, res) => {
   const orderList = await Order.find()
-  .populate({
-    path: "orderItems",
-    populate: { path:"items" , populate:"productId" }})
+    .populate({
+      path: "orderItems",
+      populate: { path: "items", populate: "productId" },
+    })
     .sort({ dateOrdered: -1 });
 
   if (!orderList) {
@@ -17,7 +20,6 @@ router.get(`/`, async (req, res) => {
   }
   res.send(orderList);
 });
-
 
 // router.get(`/:id`, async (req, res) => {
 //   const order = await Order.findById(req.params.id)
@@ -36,50 +38,42 @@ router.get(`/`, async (req, res) => {
 //   res.send(order);
 // });
 
-
-
 // get pending orders for seller
 
 router.get(`/get/:sellerId`, async (req, res) => {
-
   let filter = {
-    $and: [
-      { sellerDetails: req.params.sellerId },
-      { status: "Pending" },
-    ]
-  }
+    $and: [{ sellerDetails: req.params.sellerId }, { status: "Pending" }],
+  };
+
 
   const orderList = await Order.find(filter)
     .populate("user")
     .populate({
       path: "orderItems",
-      populate: { path:"items" , populate:"productId" }})
-      .sort({ dateOrdered: -1 });
+      populate: { path: "items", populate: "productId" },
+    })
+    .sort({ dateOrdered: -1 });
 
   if (!orderList) {
     res.status(500).json({ success: false });
   }
   res.send(orderList);
 });
-
 
 // get approved orders for seller
 
 router.get(`/get-approved/:sellerId`, async (req, res) => {
-
   let filter = {
-    $and: [
-      { sellerDetails: req.params.sellerId },
-      { status: "Approved" },
-    ]
-  }
+    $and: [{ sellerDetails: req.params.sellerId }, { status: "Approved" }],
+  };
 
   const orderList = await Order.find(filter)
     .populate("user")
     .populate({
       path: "orderItems",
-      populate: { path:"items" , populate:"productId" }})
-      .sort({ dateOrdered: -1 });
+      populate: { path: "items", populate: "productId" },
+    })
+    .sort({ dateOrdered: -1 });
 
   if (!orderList) {
     res.status(500).json({ success: false });
@@ -87,22 +81,23 @@ router.get(`/get-approved/:sellerId`, async (req, res) => {
   res.send(orderList);
 });
 
+
+
+
 router.post("/", async (req, res) => {
+  //check user and get user id
+  const user = await User.findById(req.body.id);
+  if (!user) res.status(500).json({ success: false });
 
-  //check user and get user id 
-  const user = await User.findById(req.body.id)
-  if(!user) res.status(500).json({success:false})
-
-  const cart = await Cart.findById(user.cart)
-  if(!cart) res.status(500).json({success:false})
-
+  const cart = await Cart.findById(user.cart);
+  if (!cart) res.status(500).json({ success: false });
 
   let order = new Order({
-    sellerDetails:req.body.sellerId,
+    sellerDetails: req.body.sellerId,
     orderItems: cart._id,
     DeliveryType: req.body.DeliveryType,
     phone: user.phone,
-    status: 'Pending',
+    status: "Pending",
     totalPrice: cart.subTotal,
     user: user,
   });
@@ -127,11 +122,12 @@ router.put("/:id", async (req, res) => {
   res.send(order);
 });
 
+
 router.put("/approve-order/:orderId", async (req, res) => {
   const order = await Order.findByIdAndUpdate(
     req.params.orderId,
     {
-      status: 'Approved',
+      status: "Approved",
     },
     { new: true }
   );
@@ -140,8 +136,6 @@ router.put("/approve-order/:orderId", async (req, res) => {
 
   res.send(order);
 });
-
-
 
 router.delete("/:id", (req, res) => {
   Order.findByIdAndRemove(req.params.id)
@@ -203,5 +197,89 @@ router.get(`/get/userorders/:userid`, async (req, res) => {
   }
   res.send(userOrderList);
 });
+
+router.get(`/get-total-revenue`, async (req, res) => {
+  const OrderList = await Order.aggregate([
+    {
+      $group: {
+        _id: {
+          $dateToString: { format: "%Y-%m-%d", date: "$dateOrdered" },
+        },
+        Orders: { $push: "$_id" },
+        totalPrice: { $sum: "$totalPrice" },
+      },
+    },
+  ]);
+
+  if (!OrderList) {
+    res.status(500).json({ success: false });
+  }
+  res.send(OrderList);
+});
+
+router.get(`/get-revenue-seller/:sellerId`, async (req, res) => {
+ 
+  const OrderList = await Order.aggregate([
+    { $match: {sellerDetails: new mongoose.Types.ObjectId(req.params.sellerId)} },
+    {$group: {
+      _id: {
+        $dateToString: { format: "%Y-%m-%d", date: "$dateOrdered" }
+      },
+
+      Orders: { $push: "$_id" },
+      totalPrice: { $sum: "$totalPrice" },
+    }  }])
+
+  if (!OrderList) {
+    res.status(500).json({ success: false });
+  }
+  res.send(OrderList);
+});
+
+
+// router.get(`/get-categories-sold`, async (req, res) => {
+ 
+
+//   const OrderList = await Order.aggregate([
+//     // { $match: {$and:[{ _id: filter },{myProducts.category :"60c906ce35453e14cd3f4ee3"} ]}},
+//     { $match: { _id: filter } },
+//     // {$match:{'name':'sahil'}},
+//     {
+//       $lookup: {
+//         from: "orders",
+//         localField: "orderItems.items.",
+//         foreignField: "_id",
+//         as: "productdetails",
+//       },
+//     },
+//   ]);
+
+
+//   db.party.aggregate([
+//     { "$lookup": {
+//       "from": "address",
+//       "let": { "partyId": "$_id" },
+//       "pipeline": [
+//         { "$match": { "$expr": { "$eq": ["$party_id", "$$partyId"] }}},
+//         { "$lookup": {
+//           "from": "addressComment",
+//           "let": { "addressId": "$_id" },
+//           "pipeline": [
+//             { "$match": { "$expr": { "$eq": ["$address_id", "$$addressId"] }}}
+//           ],
+//           "as": "address"
+//         }}
+//       ],
+//       "as": "address"
+//     }},
+//     { "$unwind": "$address" }
+//   ])
+  
+
+//   // if (!OrderList) {
+//   //   res.status(500).json({ success: false });
+//   // }
+//   // res.send(OrderList);
+// });
 
 module.exports = router;
