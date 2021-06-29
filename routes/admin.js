@@ -1,6 +1,8 @@
 const {Admin} = require('../models/admin');
 const express = require('express');
 const router = express.Router();
+const jwt = require('jsonwebtoken');
+const Secret = process.env.ADMIN_SECRET
 
 
 router.get(`/`, async (req, res) =>{
@@ -12,11 +14,39 @@ router.get(`/`, async (req, res) =>{
     res.send(adminList);
 })
 
+
+
+router.post("/login", async (req, res) => {
+    console.log(req.body.email);
+    const admin = await Admin.findOne({ phone: req.body.phone });
+    if (!admin) return res.status(400).send("No Admin Found");
+  
+    if(req.body.phone === admin.phone){
+        const token = jwt.sign(
+            {
+              userId: admin.id,
+              customerType: admin.customerType,
+            },
+            Secret,
+            { expiresIn: "1w" }
+          );
+      
+          res.status(200).json({ success: true, token: token,userType: admin.customerType });
+    }
+    else {
+        res.status(400).send("Invalid Phone Number");
+      }
+   
+    });
+
+
+
+
 router.post('/register', async (req,res)=>{
     console.log('res',res)
     let admin = new Admin({
         phone: req.body.phone,
-        isAdmin: req.body.isAdmin,
+        customerType: req.body.customerType,
     })
     admin = await admin.save();
 
