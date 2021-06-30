@@ -3,7 +3,7 @@ const express = require("express");
 const { User } = require("../models/user");
 const { Cart } = require("../models/cart");
 const { moment } = require("moment");
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const router = express.Router();
 
@@ -45,7 +45,6 @@ router.get(`/get/:sellerId`, async (req, res) => {
     $and: [{ sellerDetails: req.params.sellerId }, { status: "Pending" }],
   };
 
-
   const orderList = await Order.find(filter)
     .populate("user")
     .populate({
@@ -80,9 +79,6 @@ router.get(`/get-approved/:sellerId`, async (req, res) => {
   }
   res.send(orderList);
 });
-
-
-
 
 router.post("/", async (req, res) => {
   //check user and get user id
@@ -122,9 +118,7 @@ router.put("/:id", async (req, res) => {
   res.send(order);
 });
 
-
 router.put("/approve-order/:orderId", async (req, res) => {
-  
   const order = await Order.findByIdAndUpdate(
     req.params.orderId,
     {
@@ -133,7 +127,7 @@ router.put("/approve-order/:orderId", async (req, res) => {
     { new: true }
   );
 
-    console.log(order)
+  console.log(order);
   if (!order) return res.status(400).send("the order cannot be update!");
 
   res.send(order);
@@ -162,47 +156,43 @@ router.delete("/:id", (req, res) => {
 
 // rate a order
 router.put("/rate/:id", async (req, res) => {
-  const orderList = await Order.findById(req.params.id)
-  console.log(orderList)
+  const orderList = await Order.findById(req.params.id);
+  console.log(orderList);
 
   const order = await Order.findByIdAndUpdate(
     req.params.id,
     {
       rating: req.body.rating,
-      rated:true
+      rated: true,
     },
     { new: true }
   );
 
-  console.log(order)
+  console.log(order);
   if (!order) return res.status(400).send("the order cannot be rated!");
 
   res.send(order);
 });
 
-
-
-
-
 // get seller rating (group the sellers and send average rating)
 router.get("/seller-rating/:id", async (req, res) => {
-  
   const OrderList = await Order.aggregate([
-    { $match: {sellerDetails: new mongoose.Types.ObjectId(req.params.id)} },
+    { $match: { sellerDetails: new mongoose.Types.ObjectId(req.params.id) } },
     {
       $group: {
         _id: "$sellerDetails",
         Orders: { $push: "$_id" },
         totalPrice: { $sum: "$rating" },
         count: {
-          $sum: 1
-      }      }
+          $sum: 1,
+        },
+      },
     },
     {
-      $addFields:{
-        avgRating: { $divide: [ "$totalPrice", 5 ] }
-      }
-   }
+      $addFields: {
+        avgRating: { $divide: ["$totalPrice", 5] },
+      },
+    },
   ]);
 
   if (!OrderList) {
@@ -259,17 +249,23 @@ router.get(`/get-total-revenue`, async (req, res) => {
 });
 
 router.get(`/get-revenue-seller/:sellerId`, async (req, res) => {
- 
   const OrderList = await Order.aggregate([
-    { $match: {sellerDetails: new mongoose.Types.ObjectId(req.params.sellerId)} },
-    {$group: {
-      _id: {
-        $dateToString: { format: "%Y-%m-%d", date: "$dateOrdered" }
+    {
+      $match: {
+        sellerDetails: new mongoose.Types.ObjectId(req.params.sellerId),
       },
+    },
+    {
+      $group: {
+        _id: {
+          $dateToString: { format: "%Y-%m-%d", date: "$dateOrdered" },
+        },
 
-      Orders: { $push: "$_id" },
-      totalPrice: { $sum: "$totalPrice" },
-    }  }])
+        Orders: { $push: "$_id" },
+        totalPrice: { $sum: "$totalPrice" },
+      },
+    },
+  ]);
 
   if (!OrderList) {
     res.status(500).json({ success: false });
@@ -277,9 +273,27 @@ router.get(`/get-revenue-seller/:sellerId`, async (req, res) => {
   res.send(OrderList);
 });
 
+//  get seller wallet amount
+
+router.get("/seller-wallet/:id", async (req, res) => {
+  const OrderList = await Order.aggregate([
+    { $match: { sellerDetails: new mongoose.Types.ObjectId(req.params.id) } },
+    {
+      $group: {
+        _id: "$sellerDetails",
+        Orders: { $push: "$_id" },
+        totalPrice: { $sum: "$totalPrice" },
+      },
+    },
+  ]);
+
+  if (!OrderList) {
+    res.status(500).json({ success: false });
+  }
+  res.send(OrderList[0]);
+});
 
 // router.get(`/get-categories-sold`, async (req, res) => {
- 
 
 //   const OrderList = await Order.aggregate([
 //     // { $match: {$and:[{ _id: filter },{myProducts.category :"60c906ce35453e14cd3f4ee3"} ]}},
@@ -294,7 +308,6 @@ router.get(`/get-revenue-seller/:sellerId`, async (req, res) => {
 //       },
 //     },
 //   ]);
-
 
 //   db.party.aggregate([
 //     { "$lookup": {
@@ -315,7 +328,6 @@ router.get(`/get-revenue-seller/:sellerId`, async (req, res) => {
 //     }},
 //     { "$unwind": "$address" }
 //   ])
-  
 
 //   // if (!OrderList) {
 //   //   res.status(500).json({ success: false });
