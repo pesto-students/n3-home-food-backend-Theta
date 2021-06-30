@@ -91,8 +91,11 @@ const sellerSchema = new mongoose.Schema({
     max_amount:{
         type:Number,
         default:0
+    },
+    pincode:{
+        type:Number,
+        default:500000
     }
-
 
 });
 
