@@ -274,12 +274,15 @@ router.get(`/get/getproducts`, async (req, res) => {
     },
   ]);
 
-console.log(sellerList ,OrderList)
-  sellerList[0].rating = OrderList[0].avgRating;
 
   if (!sellerList) {
     res.status(500).json({ success: false });
   }
+
+  if (OrderList.length) {
+    sellerList[0].rating = OrderList[0].avgRating;
+  }
+
   res.send(sellerList);
 });
 
