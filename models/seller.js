@@ -95,6 +95,10 @@ const sellerSchema = new mongoose.Schema({
     pincode:{
         type:Number,
         default:500000
+    },
+    display_name:{
+        type:String,
+        default:''
     }
 
 });

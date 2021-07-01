@@ -138,7 +138,9 @@ router.get(`/:id`, async (req, res) => {
   if (!OrderList) {
     res.status(500).json({ success: false });
   }
-  seller.rating = OrderList[0].avgRating;
+  if(OrderList.length){
+    seller.rating = OrderList[0].avgRating;
+  }
 
   res.send(seller);
 });
@@ -347,6 +349,7 @@ router.post("/register", async (req, res) => {
     idProof: req.body.idProof,
     description: req.body.description,
     pincode: req.body.pincode,
+    display_name: req.body.display_name
 
   });
   seller = await seller.save();
@@ -457,6 +460,7 @@ router.put("/update-product-quantitiy/:id", async (req, res) => {
     }
   }
 
+  
   const user = await Seller.findByIdAndUpdate(
     // add products to seller and also update category
 
@@ -592,20 +596,6 @@ router.put("/edit/:id", async (req, res) => {
   }
 
   console.log(seller, req.body);
-
-  if (
-    !(
-      req.body.name &&
-      req.body.phone &&
-      req.body.description &&
-      req.body.image &&
-      req.body.adress &&
-      req.body.pincode 
-    )
-  ) {
-    return res.status(500).json({ success: false });
-  }
-
 
   const updatedSeller = await Seller.findByIdAndUpdate(
     req.params.id,
