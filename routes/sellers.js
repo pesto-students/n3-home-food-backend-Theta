@@ -67,6 +67,18 @@ router.post("/login", async (req, res) => {
   }
 });
 
+
+router.get(`/get/count`, async (req, res) => {
+  const sellerCount = await Seller.countDocuments((count) => count);
+
+  if (!sellerCount) {
+    res.status(500).json({ success: false });
+  }
+  res.send({
+    sellerCount: sellerCount,
+  });
+});
+
 // get sellers
 // get all
 router.get(`/`, async (req, res) => {
@@ -130,7 +142,7 @@ router.get(`/:id`, async (req, res) => {
     },
     {
       $addFields: {
-        avgRating: { $divide: ["$totalPrice", 5] },
+        avgRating: { $divide: ["$totalPrice", "$count"] },
       },
     },
   ]);

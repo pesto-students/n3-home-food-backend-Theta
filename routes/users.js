@@ -5,6 +5,10 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Secret = process.env.USER_SECRET;
 const mongoose = require("mongoose");
+const { Order } = require("../models/order");
+const { Seller } = require("../models/seller");
+
+
 
 router.get(`/`, async (req, res) => {
   const userList = await User.find().select("-passwordHash");
@@ -13,6 +17,29 @@ router.get(`/`, async (req, res) => {
     res.status(500).json({ success: false });
   }
   res.send(userList);
+});
+
+router.get(`/count`, async (req, res) => {
+  const userCount = await User.countDocuments((count) => count);
+
+  if (!userCount) {
+    res.status(500).json({ success: false });
+  }
+  res.send({
+    userCount: userCount,
+  });
+});
+
+router.get(`/count`, async (req, res) => {
+  const userCount = await User.countDocuments((count) => count);
+
+  if (!userCount) {
+    res.status(500).json({ success: false });
+  }
+  res.send({
+    userCount: userCount,
+  });
+
 });
 
 router.get("/:id", async (req, res) => {

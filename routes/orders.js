@@ -4,6 +4,7 @@ const { User } = require("../models/user");
 const { Cart } = require("../models/cart");
 const { moment } = require("moment");
 const mongoose = require("mongoose");
+const { Seller } = require("../models/seller");
 
 const router = express.Router();
 
@@ -57,6 +58,40 @@ router.get(`/get/:sellerId`, async (req, res) => {
     res.status(500).json({ success: false });
   }
   res.send(orderList);
+});
+
+router.get(`/count`, async (req, res) => {
+  const orderCount = await Order.countDocuments((count) => count);
+
+  if (!orderCount) {
+    res.status(500).json({ success: false });
+  }
+  res.send({
+    orderCount: orderCount,
+  });
+});
+
+router.get(`/allcount`, async (req, res) => {
+  const userCount = await User.countDocuments((count) => count);
+  const orderCount = await Order.countDocuments((count) => count);
+  const sellerCount = await Seller.countDocuments((count) => count);
+  const orderTotal = await Order.countDocuments((count) => count);
+
+
+
+  let orderDetails ={
+    userCount: !userCount ? 0: userCount,
+    orderCount:!orderCount ? 0: orderCount ,
+    sellerCount:!sellerCount ? 0: sellerCount ,
+    orderTotal:!orderTotal ? 0: orderTotal 
+  }
+
+  res.send(orderDetails);
+
+
+  res.send({
+    orderDetails: orderDetails,
+  });
 });
 
 // get approved orders for seller
@@ -201,17 +236,6 @@ router.get("/seller-rating/:id", async (req, res) => {
   res.send(OrderList);
 });
 
-router.get(`/get/count`, async (req, res) => {
-  const orderCount = await Order.countDocuments((count) => count);
-
-  if (!orderCount) {
-    res.status(500).json({ success: false });
-  }
-  res.send({
-    orderCount: orderCount,
-  });
-});
-
 router.get(`/get/userorders/:userid`, async (req, res) => {
   const userOrderList = await Order.find({ user: req.params.userid })
     .populate({
@@ -291,6 +315,25 @@ router.get("/seller-wallet/:id", async (req, res) => {
     res.status(500).json({ success: false });
   }
   res.send(OrderList[0]);
+});
+
+// get orders wise category sold
+
+router.get(`/orders-category-wise`, async (req, res) => {
+  const orderCount = await Order.countDocuments((count) => count);
+
+  if (!orderCount) {
+    res.status(500).json({ success: false });
+  }
+  let categoryWise = [
+    ["Breakfast", orderCount],
+    ["Lunch", 1.5 * Number(orderCount)],
+    ["Dinner", orderCount + 1],
+    ["Snacks", 1.5 * Number(orderCount)],
+  ];
+  res.send({
+    categoryWiseOrder: categoryWise,
+  });
 });
 
 // router.get(`/get-categories-sold`, async (req, res) => {
