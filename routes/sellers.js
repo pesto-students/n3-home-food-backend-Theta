@@ -67,7 +67,6 @@ router.post("/login", async (req, res) => {
   }
 });
 
-
 router.get(`/get/count`, async (req, res) => {
   const sellerCount = await Seller.countDocuments((count) => count);
 
@@ -109,8 +108,7 @@ router.get(`/`, async (req, res) => {
       },
     ]);
 
-
-    console.log(OrderList.length)
+    console.log(OrderList.length);
     if (OrderList.length) {
       item.rating = OrderList[0].avgRating;
     }
@@ -150,23 +148,20 @@ router.get(`/:id`, async (req, res) => {
   if (!OrderList) {
     res.status(500).json({ success: false });
   }
-  if(OrderList.length){
+  if (OrderList.length) {
     seller.rating = OrderList[0].avgRating;
   }
 
   res.send(seller);
 });
 
-
-
-
 // get sellers by pincode
 router.get(`/pincode/:pincode`, async (req, res) => {
-  let pincodeCheck = req.params.pincode
-  let pincodeLower = Number(pincodeCheck) - 20
-  let pincodeHigher = Number(pincodeCheck) + 20
-  console.log(pincodeLower ,pincodeHigher)
-  let filter = {"pincode":{$gt: pincodeLower, $lt: pincodeHigher}}
+  let pincodeCheck = req.params.pincode;
+  let pincodeLower = Number(pincodeCheck) - 20;
+  let pincodeHigher = Number(pincodeCheck) + 20;
+  console.log(pincodeLower, pincodeHigher);
+  let filter = { pincode: { $gt: pincodeLower, $lt: pincodeHigher } };
   const seller = await Seller.find(filter).populate("category");
 
   for (let item of seller) {
@@ -288,7 +283,6 @@ router.get(`/get/getproducts`, async (req, res) => {
     },
   ]);
 
-
   if (!sellerList) {
     res.status(500).json({ success: false });
   }
@@ -337,12 +331,22 @@ router.get(`/get/SellersByProducts`, async (req, res) => {
   res.send(sellerList);
 });
 
+
+
 // //get sellers from category
 router.get(`/get/SellersByCategory`, async (req, res) => {
   console.log("asda");
+  let pincodeCheck = req.query.pincode;
+  let pincodeLower = Number(pincodeCheck) - 20;
+  let pincodeHigher = Number(pincodeCheck) + 20;
+
   const sellerList = await Seller.find({
-    productCategories: { $in: [req.query.categoryId] },
+    $and: [
+      { productCategories: { $in: [req.query.categoryId] } },
+      { pincode: { $gt: pincodeLower, $lt: pincodeHigher } },
+    ],
   });
+  console.log(sellerList);
 
   if (!sellerList) {
     res.status(500).json({ success: false });
@@ -361,8 +365,7 @@ router.post("/register", async (req, res) => {
     idProof: req.body.idProof,
     description: req.body.description,
     pincode: req.body.pincode,
-    display_name: req.body.display_name
-
+    display_name: req.body.display_name,
   });
   seller = await seller.save();
 
@@ -443,8 +446,7 @@ router.put("/:id", async (req, res) => {
       rejection_reason: userExist.rejection_reason,
       description: userExist.description,
       pincode: userExist.pincode,
-      rating:userExist.rating
-
+      rating: userExist.rating,
     },
     { new: true }
   );
@@ -472,7 +474,6 @@ router.put("/update-product-quantitiy/:id", async (req, res) => {
     }
   }
 
-  
   const user = await Seller.findByIdAndUpdate(
     // add products to seller and also update category
 
@@ -495,9 +496,7 @@ router.put("/update-product-quantitiy/:id", async (req, res) => {
       rating: userExist.rating,
       description: userExist.description,
       pincode: userExist.pincode,
-      rating:userExist.rating
-
-
+      rating: userExist.rating,
     },
     { new: true }
   );
@@ -531,9 +530,7 @@ router.put("/approve/:id", async (req, res) => {
       rejection_reason: seller.rejection_reason,
       description: seller.description,
       pincode: seller.pincode,
-      rating:seller.rating
-
-
+      rating: seller.rating,
     },
     { new: true }
   );
@@ -569,9 +566,7 @@ router.put("/reject/:id", async (req, res) => {
       rejection_reason: req.body.rejection_reason,
       description: seller.description,
       pincode: seller.pincode,
-      rating:seller.rating
-
-
+      rating: seller.rating,
     },
     { new: true }
   );
@@ -625,15 +620,13 @@ router.put("/edit/:id", async (req, res) => {
       status: "Approved",
       rejection_reason: seller.rejection_reason,
       description: seller.description,
-      rating:seller.rating,
-      pincode:req.body.pincode
-
-
+      rating: seller.rating,
+      pincode: req.body.pincode,
     },
     { new: true }
   );
 
-  console.log(updatedSeller)
+  console.log(updatedSeller);
   if (!updatedSeller)
     return res.status(400).send("the user cannot be created!");
 
@@ -669,7 +662,7 @@ router.put("/delete-product/:id", async (req, res) => {
       rejection_reason: seller.rejection_reason,
       description: seller.description,
       pincode: seller.pincode,
-      rating:seller.rating
+      rating: seller.rating,
     },
     { new: true }
   );
