@@ -640,7 +640,7 @@ router.put("/edit/:id",uploadOptions.single("image"), async (req, res) => {
       requestedProducts: seller.requestedProducts,
       status: "Approved",
       rejection_reason: seller.rejection_reason,
-      description: seller.description,
+      description: req.body.description,
       rating: seller.rating,
       pincode: req.body.pincode,
     },

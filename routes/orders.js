@@ -77,17 +77,14 @@ router.get(`/allcount`, async (req, res) => {
   const sellerCount = await Seller.countDocuments((count) => count);
   const orderTotal = await Order.countDocuments((count) => count);
 
-
-
-  let orderDetails ={
-    userCount: !userCount ? 0: userCount,
-    orderCount:!orderCount ? 0: orderCount ,
-    sellerCount:!sellerCount ? 0: sellerCount ,
-    orderTotal:!orderTotal ? 0: orderTotal 
-  }
+  let orderDetails = {
+    userCount: !userCount ? 0 : userCount,
+    orderCount: !orderCount ? 0 : orderCount,
+    sellerCount: !sellerCount ? 0 : sellerCount,
+    orderTotal: !orderTotal ? 0 : orderTotal,
+  };
 
   res.send(orderDetails);
-
 
   res.send({
     orderDetails: orderDetails,
@@ -212,7 +209,14 @@ router.put("/rate/:id", async (req, res) => {
 // get seller rating (group the sellers and send average rating)
 router.get("/seller-rating/:id", async (req, res) => {
   const OrderList = await Order.aggregate([
-     { $match: {$and:[{ sellerDetails: new mongoose.Types.ObjectId(req.params.id) },{rated : true} ]}},
+    {
+      $match: {
+        $and: [
+          { sellerDetails: new mongoose.Types.ObjectId(req.params.id) },
+          { rated: true },
+        ],
+      },
+    },
     // { $match: { sellerDetails: new mongoose.Types.ObjectId(req.params.id) } },
     // { $match: { sellerDetails: new mongoose.Types.ObjectId(req.params.id) } },
     {
@@ -256,7 +260,16 @@ router.get(`/get/userorders/:userid`, async (req, res) => {
 });
 
 router.get(`/get-total-revenue`, async (req, res) => {
+
   const OrderList = await Order.aggregate([
+    {
+      $match: {
+        dateOrdered: {
+          $gte: new Date(req.query.startDate),
+          $lt: new Date(req.query.endDate),
+        },
+      },
+    },
     {
       $group: {
         _id: {
@@ -274,13 +287,16 @@ router.get(`/get-total-revenue`, async (req, res) => {
   res.send(OrderList);
 });
 
+
 router.get(`/get-revenue-seller/:sellerId`, async (req, res) => {
   const OrderList = await Order.aggregate([
-    {
-      $match: {
-        sellerDetails: new mongoose.Types.ObjectId(req.params.sellerId),
-      },
-    },
+    { $match: {$and:[{
+      dateOrdered: {
+        $gte: new Date(req.query.startDate),
+        $lt: new Date(req.query.endDate),
+      }
+    },{sellerDetails :new mongoose.Types.ObjectId(req.params.sellerId) } ]}},
+    // },{sellerDetails :new mongoose.Types.ObjectId(req.params.sellerId) } ]}},
     {
       $group: {
         _id: {
@@ -338,7 +354,6 @@ router.get(`/orders-category-wise`, async (req, res) => {
   });
 });
 
-
 // router.get(`/get-categories-sold-graph`, async (req, res) => {
 //   // const OrderList = await Order.find().populate('orderItems')
 //   const OrderList = await Order.aggregate([
@@ -366,8 +381,6 @@ router.get(`/orders-category-wise`, async (req, res) => {
 //   });
 //   res.send(OrderList);
 // });
-
-
 
 // router.get(`/get-categories-sold`, async (req, res) => {
 
@@ -411,59 +424,127 @@ router.get(`/orders-category-wise`, async (req, res) => {
 //   // res.send(OrderList);
 // });
 
-
 router.get(`/categories`, async (req, res) => {
+  let date;
 
-  let date
-  const OrderList = await Order.aggregate([
-    {
-      $group: {
-        _id: {
-          $dateToString: { format: "%Y-%m-%d", date: "$dateOrdered" },
+  const OrderList = await Order.aggregate(
+    [
+      {
+        $match: {
+          dateOrdered: {
+            $gte: new Date(req.query.startDate),
+            $lt: new Date(req.query.endDate),
+          },
         },
-        Orders: { $push: "$_id" },
-        totalPrice: { $sum: "$totalPrice" },
       },
-    },
-  ],function(err, result) {
-})
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$dateOrdered" },
+          },
+          Orders: { $push: "$_id" },
+          totalPrice: { $sum: "$totalPrice" },
+        },
+      },
+    ],
+    function (err, result) {}
+  );
 
-let pushed = [] 
-// console.log()
+  let pushed = [];
+  console.log(OrderList);
 
-// aslo apply for loop here 
-for(let order of OrderList[0].Orders){
-  const orderList = await Order.find({'_id':order})
-  .populate({
-    path: "orderItems",
-    populate: { path: "items", populate: {path : "productId" , populate :"category"}  },
-  })
-  pushed.push(orderList[0])
-}
+  // aslo apply for loop here
+  for (let orderList of OrderList) {
+    let obj = { date: orderList._id };
+    let localArray = [];
+    for (let order of orderList.Orders) {
+      const orderList = await Order.find({ _id: order }).populate({
+        path: "orderItems",
+        populate: {
+          path: "items",
+          populate: { path: "productId", populate: "category" },
+        },
+      });
+
+      localArray.push(orderList[0]);
+      console.log(orderList[0]);
+    }
+    obj.categories = localArray;
+    pushed.push(obj);
+  }
 
   if (!OrderList) {
     res.status(500).json({ success: false });
   }
 
-
-  
   res.send(pushed);
-
 });
 
+// get categories accordnig to orders
+router.get(`/categories-seller/:sellerId`, async (req, res) => {
+  let date;
+  
 
+  const OrderList = await Order.aggregate(
+    [
+      { $match: {$and:[{
+        dateOrdered: {
+          $gte: new Date(req.query.startDate),
+          $lt: new Date(req.query.endDate),
+        }
+      },{sellerDetails :new mongoose.Types.ObjectId(req.params.sellerId) } ]}},
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$dateOrdered" },
+          },
+          Orders: { $push: "$_id" },
+          totalPrice: { $sum: "$totalPrice" },
+        },
+      },
+    ],
+    function (err, result) {}
+  );
 
+  let pushed = [];
+  console.log(OrderList);
+
+  // aslo apply for loop here
+  for (let orderList of OrderList) {
+    let obj = { date: orderList._id };
+    let localArray = [];
+    for (let order of orderList.Orders) {
+      const orderList = await Order.find({ _id: order }).populate({
+        path: "orderItems",
+        populate: {
+          path: "items",
+          populate: { path: "productId", populate: "category" },
+        },
+      });
+
+      localArray.push(orderList[0]);
+      console.log(orderList[0]);
+    }
+    obj.categories = localArray;
+    pushed.push(obj);
+  }
+
+  if (!OrderList) {
+    res.status(500).json({ success: false });
+  }
+
+  res.send(pushed);
+});
 
 // router.get(`/categories`, async (req, res) => {
 
-  // const orderList = await Order.find()
-  // .populate({
-  //   path: "orderItems",
-  //   populate: { path: "items", populate: {path : "productId" , populate :"category"}  },
-  // })
+// const orderList = await Order.find()
+// .populate({
+//   path: "orderItems",
+//   populate: { path: "items", populate: {path : "productId" , populate :"category"}  },
+// })
 
 //   res.send(orderList);
 // });
-
 
 module.exports = router;

@@ -19,11 +19,11 @@ const mongoose = require("mongoose");
 // get user cart by userid
 router.get(`/:id`, async (req, res) => {
 
-  // const user = await User.findById(req.params.id).select({cart:1})
+   const user = await User.findById(req.params.id).select({cart:1})
   if(!user) res.status(500).json({success:false})
 
-  // const cart = await Cart.findById(user.cart).populate({path:'items',populate:'productId'})
-  const cart = await Cart.findById(user.cart)
+  const cart = await Cart.findById(user.cart).populate({path:'items',populate:'productId'})
+  // const cart = await Cart.findById(user.cart)
   if(!cart) res.status(500).json({ items:[] })
 
   
