@@ -8,6 +8,7 @@ const secret = process.env.SELLER_SECRET;
 const { Product } = require("../models/product");
 const mongoose = require("mongoose");
 const { Order } = require("../models/order");
+const { User } = require("../models/user");
 
 // image upload configuration
 
@@ -166,7 +167,8 @@ router.get(`/pincode/:pincode`, async (req, res) => {
 
   for (let item of seller) {
     const OrderList = await Order.aggregate([
-      { $match: { sellerDetails: new mongoose.Types.ObjectId(item.id) } },
+      // { $match: { sellerDetails: new mongoose.Types.ObjectId(item.id) } },
+      { $match: {$and:[{ sellerDetails: new mongoose.Types.ObjectId(item.id) },{rated : true} ]}},
       {
         $group: {
           _id: "$sellerDetails",
@@ -179,7 +181,7 @@ router.get(`/pincode/:pincode`, async (req, res) => {
       },
       {
         $addFields: {
-          avgRating: { $divide: ["$totalPrice", 5] },
+          avgRating: { $divide: ["$totalPrice", "$count"] },
         },
       },
     ]);
@@ -356,6 +358,14 @@ router.get(`/get/SellersByCategory`, async (req, res) => {
 
 router.post("/register", async (req, res) => {
   console.log("res", res);
+
+  if(req.body.phone){
+    const seller = await Seller.findOne({ phone: req.body.phone });
+    const user = await User.findOne({ phone: req.body.phone });
+
+  if (seller || user) return res.status(400).send("User already exist")
+  }  
+  
   let seller = new Seller({
     name: req.body.name,
     email: req.body.email,
@@ -596,7 +606,7 @@ router.delete("/:id", (req, res) => {
 });
 
 // edit a seller
-router.put("/edit/:id", async (req, res) => {
+router.put("/edit/:id",uploadOptions.single("image"), async (req, res) => {
   const seller = await Seller.findById(req.params.id);
   if (!seller) {
     return res.status(500).json({ success: false });
@@ -604,12 +614,23 @@ router.put("/edit/:id", async (req, res) => {
 
   console.log(seller, req.body);
 
+  const file = req.file;
+  let imagepath;
+
+  if (file) {
+    const fileName = file.filename;
+    const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
+    imagepath = `${basePath}${fileName}`;
+  } else {
+    imagepath = seller.image;
+  }
+
   const updatedSeller = await Seller.findByIdAndUpdate(
     req.params.id,
     {
       name: req.body.name,
       phone: req.body.phone,
-      image: seller.image,
+      image: imagepath,
       customerType: seller.customerType,
       adress: req.body.adress,
       idProof: seller.idProof,

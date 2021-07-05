@@ -78,6 +78,40 @@ router.put("/:id", async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
+  // check if seller exist with this number
+
+  const seller = await Seller.findOne({ phone: req.body.phone });
+  if (seller) {
+ 
+    if (req.body.phone === seller.phone && seller.status == "Approved") {
+      let secret = 'SELLER'
+      const token = jwt.sign(
+        {
+          userId: seller.id,
+          customerType: seller.customerType,
+        },
+        secret,
+        { expiresIn: "1w" }
+      );
+  
+      res.status(200).json({
+        success: true,
+        token: token,
+        userType: seller.customerType,
+        id: seller.id,
+      });
+  
+    }
+    else if(req.body.phone === seller.phone && seller.status == "Pending"){
+      res
+      .status(400)
+      .send("you dont have access to seller panel please contact admin");
+  }
+  }
+
+ 
+  
+
   // check if the user exist
   const user = await User.findOne({ phone: req.body.phone });
   if (!user){
@@ -88,13 +122,13 @@ router.post("/login", async (req, res) => {
     });
     user = await user.save();
     if (!user) return res.status(400).send("the user cannot be created!");
-
+    let secret = 'USER'
     const token = jwt.sign(
       {
         userId: user.id,
         customerType: user.customerType,
       },
-      Secret,
+      secret,
       { expiresIn: "1w" }
     );
     res.status(200).json({ success: true, token: token , userType : user.customerType ,userId:user.id });

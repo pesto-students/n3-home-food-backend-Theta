@@ -212,7 +212,9 @@ router.put("/rate/:id", async (req, res) => {
 // get seller rating (group the sellers and send average rating)
 router.get("/seller-rating/:id", async (req, res) => {
   const OrderList = await Order.aggregate([
-    { $match: { sellerDetails: new mongoose.Types.ObjectId(req.params.id) } },
+     { $match: {$and:[{ sellerDetails: new mongoose.Types.ObjectId(req.params.id) },{rated : true} ]}},
+    // { $match: { sellerDetails: new mongoose.Types.ObjectId(req.params.id) } },
+    // { $match: { sellerDetails: new mongoose.Types.ObjectId(req.params.id) } },
     {
       $group: {
         _id: "$sellerDetails",
@@ -225,7 +227,7 @@ router.get("/seller-rating/:id", async (req, res) => {
     },
     {
       $addFields: {
-        avgRating: { $divide: ["$totalPrice", 5] },
+        avgRating: { $divide: ["$totalPrice", "$count"] },
       },
     },
   ]);
@@ -336,6 +338,37 @@ router.get(`/orders-category-wise`, async (req, res) => {
   });
 });
 
+
+// router.get(`/get-categories-sold-graph`, async (req, res) => {
+//   // const OrderList = await Order.find().populate('orderItems')
+//   const OrderList = await Order.aggregate([
+//     {
+//       $lookup: {
+//         from: "user",
+//         localField: "user",
+//         foreignField: "id",
+//         as: "ordess",
+//       },
+//     },
+//   ]);
+//   if (!OrderList) {
+//     res.status(500).json({ success: false });
+//   }
+//   // OrderList.populate('user')
+//   let result
+//   OrderList.populate(result, {path: "user"});
+//   Weapon.populate(users, { path: 'weapon' }, function (err, users) {
+//     users.forEach(function (user) {
+//       console.log('%s uses a %s', users.name, user.weapon.name)
+//       // Indiana Jones uses a whip
+//       // Batman uses a boomerang
+//     });
+//   });
+//   res.send(OrderList);
+// });
+
+
+
 // router.get(`/get-categories-sold`, async (req, res) => {
 
 //   const OrderList = await Order.aggregate([
@@ -377,5 +410,60 @@ router.get(`/orders-category-wise`, async (req, res) => {
 //   // }
 //   // res.send(OrderList);
 // });
+
+
+router.get(`/categories`, async (req, res) => {
+
+  let date
+  const OrderList = await Order.aggregate([
+    {
+      $group: {
+        _id: {
+          $dateToString: { format: "%Y-%m-%d", date: "$dateOrdered" },
+        },
+        Orders: { $push: "$_id" },
+        totalPrice: { $sum: "$totalPrice" },
+      },
+    },
+  ],function(err, result) {
+})
+
+let pushed = [] 
+// console.log()
+
+// aslo apply for loop here 
+for(let order of OrderList[0].Orders){
+  const orderList = await Order.find({'_id':order})
+  .populate({
+    path: "orderItems",
+    populate: { path: "items", populate: {path : "productId" , populate :"category"}  },
+  })
+  pushed.push(orderList[0])
+}
+
+  if (!OrderList) {
+    res.status(500).json({ success: false });
+  }
+
+
+  
+  res.send(pushed);
+
+});
+
+
+
+
+// router.get(`/categories`, async (req, res) => {
+
+  // const orderList = await Order.find()
+  // .populate({
+  //   path: "orderItems",
+  //   populate: { path: "items", populate: {path : "productId" , populate :"category"}  },
+  // })
+
+//   res.send(orderList);
+// });
+
 
 module.exports = router;
