@@ -23,7 +23,7 @@ const storage = multer.diskStorage({
       uploadError = null;
     }
     // callback is the place to where we need to throw errors
-    cb(uploadError, "images/uploads");
+    cb(uploadError, "public/uploads");
   },
   filename: function (req, file, cb) {
     const fileName = file.originalname.split(" ").join("-");
@@ -52,7 +52,7 @@ router.post(`/`, uploadOptions.single("image"), async (req, res) => {
     if (!file) return res.status(400).send("No image in the request");
 
     const fileName = file.filename;
-    const basePath = `${req.protocol}://${req.get("host")}/images/uploads/`;
+    const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
 
     let product = new Product({
       name: req.body.name,
@@ -78,7 +78,7 @@ router.post(`/admin`, uploadOptions.single("image"), async (req, res) => {
   if (!file) return res.status(400).send("No image in the request");
 
   const fileName = file.filename;
-  const basePath = `${req.protocol}://${req.get("host")}/images/uploads/`;
+  const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
 
   let product = new Product({
     name: req.body.name,
@@ -138,7 +138,7 @@ router.put("/:id", uploadOptions.single("image"), async (req, res) => {
 
   if (file) {
     const fileName = file.filename;
-    const basePath = `${req.protocol}://${req.get("host")}/images/uploads/`;
+    const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
     imagepath = `${basePath}${fileName}`;
   } else {
     imagepath = product.image;
