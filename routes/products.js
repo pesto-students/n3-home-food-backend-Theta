@@ -136,7 +136,6 @@ router.put("/:id", uploadOptions.single("image"), async (req, res) => {
   const file = req.file;
   let imagepath;
 
-  
   if (file) {
     const fileName = file.filename;
     const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
