@@ -259,6 +259,7 @@ router.get(`/get/getproducts`, async (req, res) => {
       description: 1,
       max_amount: 1,
       rating: 1,
+      image:1
     });
 
   // get seller rating
