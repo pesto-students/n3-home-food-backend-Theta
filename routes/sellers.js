@@ -29,7 +29,7 @@ const storage = multer.diskStorage({
       uploadError = null;
     }
     // callback is the place to where we need to throw errors
-    cb(uploadError, "public/uploads");
+    cb(uploadError, "images/uploads");
   },
   filename: function (req, file, cb) {
     const fileName = file.originalname.split(" ").join("-");
@@ -620,7 +620,7 @@ router.put("/edit/:id",uploadOptions.single("image"), async (req, res) => {
 
   if (file) {
     const fileName = file.filename;
-    const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
+    const basePath = `${req.protocol}://${req.get("host")}/images/uploads/`;
     imagepath = `${basePath}${fileName}`;
   } else {
     imagepath = seller.image;
