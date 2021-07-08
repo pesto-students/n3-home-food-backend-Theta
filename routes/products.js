@@ -3,6 +3,7 @@ const express = require("express");
 const { Category } = require("../models/category");
 const router = express.Router();
 const mongoose = require("mongoose");
+const { UploadFile, getFileStream } = require("../s3")
 
 // image upload configuration
 
@@ -33,8 +34,16 @@ const storage = multer.diskStorage({
 });
 
 const uploadOptions = multer({ storage: storage });
-
 // all request starts here
+
+// get the image from s3 bucket using a key
+
+router.get('/images/:key',(req,res) => {
+  const key = req.params.key
+  const readStream = getFileStream(key)
+  console.log()
+  readStream.pipe(res)
+})
 
 router.post(`/`, uploadOptions.single("image"), async (req, res) => {
   let categoryArray = req.body.category.split(",");
@@ -48,7 +57,9 @@ router.post(`/`, uploadOptions.single("image"), async (req, res) => {
     const category = await Category.findById(item);
     if (!category) return res.status(400).send("Invalid Category");
     const file = req.file;
-
+    // upload the image to s3
+    const uploadImage = await UploadFile(file)
+    console.log(uploadImage.Location)
     if (!file) return res.status(400).send("No image in the request");
 
     const fileName = file.filename;
@@ -57,7 +68,7 @@ router.post(`/`, uploadOptions.single("image"), async (req, res) => {
     let product = new Product({
       name: req.body.name,
       description: req.body.description,
-      image: `${basePath}${fileName}`,
+      image: uploadImage.Location,
       max_price: req.body.max_price,
       category: item,
       status: req.body.status,
@@ -76,6 +87,7 @@ router.post(`/`, uploadOptions.single("image"), async (req, res) => {
 router.post(`/admin`, uploadOptions.single("image"), async (req, res) => {
   const file = req.file;
   if (!file) return res.status(400).send("No image in the request");
+  const uploadImage = await UploadFile(file)
 
   const fileName = file.filename;
   const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
@@ -83,7 +95,7 @@ router.post(`/admin`, uploadOptions.single("image"), async (req, res) => {
   let product = new Product({
     name: req.body.name,
     description: req.body.description,
-    image: `${basePath}${fileName}`,
+    image: uploadImage.Location,
     max_price: req.body.max_price,
     status: req.body.status,
     reassigned_to: req.body.reassigned_to,
@@ -134,12 +146,16 @@ router.put("/:id", uploadOptions.single("image"), async (req, res) => {
   if (!product) return res.status(400).send("Invalid Product!");
 
   const file = req.file;
+  // upload the image to s3
+  const uploadImage = await UploadFile(file)
+  console.log(uploadImage)
+  
   let imagepath;
 
   if (file) {
     const fileName = file.filename;
     const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
-    imagepath = `${basePath}${fileName}`;
+    imagepath = uploadImage.Location;
   } else {
     imagepath = product.image;
   }

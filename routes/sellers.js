@@ -9,6 +9,7 @@ const { Product } = require("../models/product");
 const mongoose = require("mongoose");
 const { Order } = require("../models/order");
 const { User } = require("../models/user");
+const { UploadFile, getFileStream } = require("../s3")
 
 // image upload configuration
 
@@ -617,11 +618,12 @@ router.put("/edit/:id",uploadOptions.single("image"), async (req, res) => {
 
   const file = req.file;
   let imagepath;
+  const uploadImage = await UploadFile(file)
 
   if (file) {
     const fileName = file.filename;
     const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
-    imagepath = `${basePath}${fileName}`;
+    imagepath = uploadImage.Location
   } else {
     imagepath = seller.image;
   }
