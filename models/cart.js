@@ -28,7 +28,11 @@ const cartSchema = mongoose.Schema({
     subTotal:{
         type:Number,
         default:0
-    }
+    },
+    SellerId :{
+        type:mongoose.Schema. Types.ObjectId,
+        ref:"seller"
+    },
 })
 
 

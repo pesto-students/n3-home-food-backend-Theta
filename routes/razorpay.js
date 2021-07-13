@@ -2,16 +2,28 @@ const express = require("express");
 const router = express.Router();
 const Razorpay = require("razorpay");
 const shortid = require("shortid");
-const bodyParser = require('body-parser');
+const bodyParser = require("body-parser");
 const { send } = require("process");
+const { User } = require("../models/user");
+const { Cart } = require("../models/cart");
+
 const razorpay = new Razorpay({
   key_id: "rzp_test_d0CoHtYXgWcl5z",
   key_secret: "Izq2IYhZ8WgtyjIXtX66D6i6",
 });
 
 router.post("/", async (req, res) => {
+  const user = await User.findById(req.body.userId);
+  if (!user) return res.status(400).send("No user found");
+
+  if (!user.cart) return res.status(400).send("No user found");
+
+  // if cart already exist
+
+  const cart = await Cart.findById(user.cart);
+
   const payment_capture = 1;
-  const amount = 411;
+  const amount = cart.subTotal;
   const currency = "INR";
 
   const options = {
@@ -42,16 +54,12 @@ router.post("/verification", async (req, res) => {
   shasum.update(JSON.stringify(req.body));
   const digest = shasum.digest("hex");
 
-  console.log(digest, req.body.response.razorpay_signature)
-  if(digest === req.razorpay_signature){
-      console.log('req is legit')
-      // save this to database
+  console.log(digest, req.body.response.razorpay_signature);
+  if (digest === req.razorpay_signature) {
+    console.log("req is legit");
+    // save this to database
+  } else {
   }
-  else{
-
-  }
-
-
 
   console.log(req.body);
   res.json({ status: "ok" });
