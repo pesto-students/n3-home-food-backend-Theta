@@ -94,11 +94,17 @@ router.get(`/allcount`, async (req, res) => {
 // get approved orders for seller
 
 router.get(`/get-approved/:sellerId`, async (req, res) => {
+  const limit = req.query.page ? parseInt(2) : "";
+  const page = req.query.page ? parseInt(req.query.page) : "";
+  const skipIndex = req.query.page ? (req.query.page - 1) * limit : "";
+
   let filter = {
     $and: [{ sellerDetails: req.params.sellerId }, { status: "Approved" }],
   };
 
   const orderList = await Order.find(filter)
+    .limit(limit)
+    .skip(skipIndex)
     .populate("user")
     .populate({
       path: "orderItems",
@@ -260,7 +266,6 @@ router.get(`/get/userorders/:userid`, async (req, res) => {
 });
 
 router.get(`/get-total-revenue`, async (req, res) => {
-
   const OrderList = await Order.aggregate([
     {
       $match: {
@@ -287,15 +292,21 @@ router.get(`/get-total-revenue`, async (req, res) => {
   res.send(OrderList);
 });
 
-
 router.get(`/get-revenue-seller/:sellerId`, async (req, res) => {
   const OrderList = await Order.aggregate([
-    { $match: {$and:[{
-      dateOrdered: {
-        $gte: new Date(req.query.startDate),
-        $lt: new Date(req.query.endDate),
-      }
-    },{sellerDetails :new mongoose.Types.ObjectId(req.params.sellerId) } ]}},
+    {
+      $match: {
+        $and: [
+          {
+            dateOrdered: {
+              $gte: new Date(req.query.startDate),
+              $lt: new Date(req.query.endDate),
+            },
+          },
+          { sellerDetails: new mongoose.Types.ObjectId(req.params.sellerId) },
+        ],
+      },
+    },
     // },{sellerDetails :new mongoose.Types.ObjectId(req.params.sellerId) } ]}},
     {
       $group: {
@@ -483,16 +494,22 @@ router.get(`/categories`, async (req, res) => {
 // get categories accordnig to orders
 router.get(`/categories-seller/:sellerId`, async (req, res) => {
   let date;
-  
 
   const OrderList = await Order.aggregate(
     [
-      { $match: {$and:[{
-        dateOrdered: {
-          $gte: new Date(req.query.startDate),
-          $lt: new Date(req.query.endDate),
-        }
-      },{sellerDetails :new mongoose.Types.ObjectId(req.params.sellerId) } ]}},
+      {
+        $match: {
+          $and: [
+            {
+              dateOrdered: {
+                $gte: new Date(req.query.startDate),
+                $lt: new Date(req.query.endDate),
+              },
+            },
+            { sellerDetails: new mongoose.Types.ObjectId(req.params.sellerId) },
+          ],
+        },
+      },
       {
         $group: {
           _id: {

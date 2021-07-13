@@ -3,7 +3,7 @@ const express = require("express");
 const { Category } = require("../models/category");
 const router = express.Router();
 const mongoose = require("mongoose");
-const { UploadFile, getFileStream } = require("../s3")
+const { UploadFile, getFileStream } = require("../s3");
 
 // image upload configuration
 
@@ -38,12 +38,12 @@ const uploadOptions = multer({ storage: storage });
 
 // get the image from s3 bucket using a key
 
-router.get('/images/:key',(req,res) => {
-  const key = req.params.key
-  const readStream = getFileStream(key)
-  console.log()
-  readStream.pipe(res)
-})
+router.get("/images/:key", (req, res) => {
+  const key = req.params.key;
+  const readStream = getFileStream(key);
+  console.log();
+  readStream.pipe(res);
+});
 
 router.post(`/`, uploadOptions.single("image"), async (req, res) => {
   let categoryArray = req.body.category.split(",");
@@ -58,8 +58,8 @@ router.post(`/`, uploadOptions.single("image"), async (req, res) => {
     if (!category) return res.status(400).send("Invalid Category");
     const file = req.file;
     // upload the image to s3
-    const uploadImage = await UploadFile(file)
-    console.log(uploadImage.Location)
+    const uploadImage = await UploadFile(file);
+    console.log(uploadImage.Location);
     if (!file) return res.status(400).send("No image in the request");
 
     const fileName = file.filename;
@@ -87,7 +87,7 @@ router.post(`/`, uploadOptions.single("image"), async (req, res) => {
 router.post(`/admin`, uploadOptions.single("image"), async (req, res) => {
   const file = req.file;
   if (!file) return res.status(400).send("No image in the request");
-  const uploadImage = await UploadFile(file)
+  const uploadImage = await UploadFile(file);
 
   const fileName = file.filename;
   const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
@@ -124,7 +124,6 @@ router.get(`/`, async (req, res) => {
   res.send(productList);
 });
 
-
 // get by category and show details
 router.get(`/:id`, async (req, res) => {
   const product = await Product.findById(req.params.id).populate("category");
@@ -134,7 +133,6 @@ router.get(`/:id`, async (req, res) => {
   }
   res.send(product);
 });
-
 
 // update the product
 router.put("/:id", uploadOptions.single("image"), async (req, res) => {
@@ -147,9 +145,9 @@ router.put("/:id", uploadOptions.single("image"), async (req, res) => {
 
   const file = req.file;
   // upload the image to s3
-  const uploadImage = await UploadFile(file)
-  console.log(uploadImage)
-  
+  const uploadImage = await UploadFile(file);
+  console.log(uploadImage);
+
   let imagepath;
 
   if (file) {
@@ -300,6 +298,10 @@ router.put("/product-reassign/:id", async (req, res) => {
 
 // get approved products, also by category
 router.get(`/get/approved`, async (req, res) => {
+  const limit = req.query.page ? parseInt(5) : "";
+  const page = req.query.page ? parseInt(req.query.page) : "";
+  const skipIndex = req.query.page ? (req.query.page - 1) * limit : "";
+
   let filter = {};
   if (req.query.categories) {
     if (!mongoose.isValidObjectId(req.query.categories))
@@ -315,7 +317,10 @@ router.get(`/get/approved`, async (req, res) => {
     filter = { status: "Approved" };
   }
   console.log(filter);
-  const productList = await Product.find(filter).populate("category");
+  const productList = await Product.find(filter)
+    .limit(limit)
+    .skip(skipIndex)
+    .populate("category");
 
   if (!productList) {
     res.status(500).json({ success: false });
@@ -325,6 +330,10 @@ router.get(`/get/approved`, async (req, res) => {
 
 // get pending products, also by category
 router.get(`/get/pending`, async (req, res) => {
+  const limit = req.query.page ? parseInt(100) : "";
+  const page = req.query.page ? parseInt(req.query.page) : "";
+  const skipIndex = req.query.page ? (req.query.page - 1) * limit : "";
+
   let filter = {};
   if (req.query.categories) {
     if (!mongoose.isValidObjectId(req.query.categories))
@@ -340,7 +349,10 @@ router.get(`/get/pending`, async (req, res) => {
     filter = { status: "Pending" };
   }
   console.log(filter);
-  const productList = await Product.find(filter).populate("category");
+  const productList = await Product.find(filter)
+    .limit(limit)
+    .skip(skipIndex)
+    .populate("category");
 
   if (!productList) {
     res.status(500).json({ success: false });

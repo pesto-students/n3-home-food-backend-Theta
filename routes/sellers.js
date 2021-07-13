@@ -9,7 +9,7 @@ const { Product } = require("../models/product");
 const mongoose = require("mongoose");
 const { Order } = require("../models/order");
 const { User } = require("../models/user");
-const { UploadFile, getFileStream } = require("../s3")
+const { UploadFile, getFileStream } = require("../s3");
 
 // image upload configuration
 
@@ -83,7 +83,14 @@ router.get(`/get/count`, async (req, res) => {
 // get sellers
 // get all
 router.get(`/`, async (req, res) => {
-  const sellerList = await Seller.find().populate("products");
+  const limit = req.query.page ? parseInt(2) : "";
+  const page = req.query.page ? parseInt(req.query.page) : "";
+  const skipIndex = req.query.page ? (req.query.page - 1) * limit : "";
+
+  const sellerList = await Seller.find()
+    .limit(limit)
+    .skip(skipIndex)
+    .populate("products");
   if (!sellerList) {
     res.status(500).json({ success: false });
   }
@@ -157,19 +164,34 @@ router.get(`/:id`, async (req, res) => {
   res.send(seller);
 });
 
-// get sellers by pincode
+// get sellers by pincode and pagination
 router.get(`/pincode/:pincode`, async (req, res) => {
+  const limit = req.query.page ? parseInt(2) : "";
+  const page = req.query.page ? parseInt(req.query.page) : "";
+  const skipIndex = req.query.page ? (req.query.page - 1) * limit : "";
+  const results = {};
+
   let pincodeCheck = req.params.pincode;
   let pincodeLower = Number(pincodeCheck) - 20;
   let pincodeHigher = Number(pincodeCheck) + 20;
   console.log(pincodeLower, pincodeHigher);
   let filter = { pincode: { $gt: pincodeLower, $lt: pincodeHigher } };
-  const seller = await Seller.find(filter).populate("category");
+  const seller = await Seller.find(filter)
+    .limit(limit)
+    .skip(skipIndex)
+    .populate("category");
 
   for (let item of seller) {
     const OrderList = await Order.aggregate([
       // { $match: { sellerDetails: new mongoose.Types.ObjectId(item.id) } },
-      { $match: {$and:[{ sellerDetails: new mongoose.Types.ObjectId(item.id) },{rated : true} ]}},
+      {
+        $match: {
+          $and: [
+            { sellerDetails: new mongoose.Types.ObjectId(item.id) },
+            { rated: true },
+          ],
+        },
+      },
       {
         $group: {
           _id: "$sellerDetails",
@@ -234,22 +256,7 @@ router.get(`/get/rejected`, async (req, res) => {
 
 // get products by sellerid
 router.get(`/get/getproducts`, async (req, res) => {
-  console.log("filter", req);
   let filter = mongoose.Types.ObjectId(req.query.sellerid);
-
-  // const sellerList = await Seller.aggregate([
-  //   { $match: { _id: filter } },
-  //   // {$match:{'name':'sahil'}},
-  //   {
-  //     $lookup: {
-  //       from: "products",
-  //       localField: "products",
-  //       foreignField: "_id",
-  //       as: "productdetails",
-  //     },
-  //   },
-  //   { $project : { "status": 1 ,"name":1, "myProducts":1,"description":1,"max_amount":1,"rating":1} }
-  // ])
 
   const sellerList = await Seller.find({ _id: filter })
     .populate({ path: "myProducts", populate: "productCategory" })
@@ -260,7 +267,7 @@ router.get(`/get/getproducts`, async (req, res) => {
       description: 1,
       max_amount: 1,
       rating: 1,
-      image:1
+      image: 1,
     });
 
   // get seller rating
@@ -335,11 +342,8 @@ router.get(`/get/SellersByProducts`, async (req, res) => {
   res.send(sellerList);
 });
 
-
-
 // //get sellers from category
 router.get(`/get/SellersByCategory`, async (req, res) => {
-  console.log("asda");
   let pincodeCheck = req.query.pincode;
   let pincodeLower = Number(pincodeCheck) - 20;
   let pincodeHigher = Number(pincodeCheck) + 20;
@@ -358,16 +362,43 @@ router.get(`/get/SellersByCategory`, async (req, res) => {
   res.send(sellerList);
 });
 
+// //get sellers from category and pagination
+router.get(`/get/SellersByCategoryFilter`, async (req, res) => {
+  const limit = req.query.page ? parseInt(1) : "";
+  const page = req.query.page ? parseInt(req.query.page) : "";
+  const skipIndex = req.query.page ? (req.query.page - 1) * limit : "";
+  const results = {};
+
+  let pincodeCheck = req.query.pincode;
+  let pincodeLower = Number(pincodeCheck) - 20;
+  let pincodeHigher = Number(pincodeCheck) + 20;
+
+  const sellerList = await Seller.find({
+    $and: [
+      { productCategories: { $in: [req.query.categoryId] } },
+      { pincode: { $gt: pincodeLower, $lt: pincodeHigher } },
+    ],
+  })
+    .limit(limit)
+    .skip(skipIndex);
+  console.log(sellerList);
+
+  if (!sellerList) {
+    res.status(500).json({ success: false });
+  }
+  res.send(sellerList);
+});
+
 router.post("/register", async (req, res) => {
   console.log("res", res);
 
-  if(req.body.phone){
+  if (req.body.phone) {
     const seller = await Seller.findOne({ phone: req.body.phone });
     const user = await User.findOne({ phone: req.body.phone });
 
-  if (seller || user) return res.status(400).send("User already exist")
-  }  
-  
+    if (seller || user) return res.status(400).send("User already exist");
+  }
+
   let seller = new Seller({
     name: req.body.name,
     email: req.body.email,
@@ -608,7 +639,7 @@ router.delete("/:id", (req, res) => {
 });
 
 // edit a seller
-router.put("/edit/:id",uploadOptions.single("image"), async (req, res) => {
+router.put("/edit/:id", uploadOptions.single("image"), async (req, res) => {
   const seller = await Seller.findById(req.params.id);
   if (!seller) {
     return res.status(500).json({ success: false });
@@ -618,12 +649,12 @@ router.put("/edit/:id",uploadOptions.single("image"), async (req, res) => {
 
   const file = req.file;
   let imagepath;
-  const uploadImage = await UploadFile(file)
+  const uploadImage = await UploadFile(file);
 
   if (file) {
     const fileName = file.filename;
     const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
-    imagepath = uploadImage.Location
+    imagepath = uploadImage.Location;
   } else {
     imagepath = seller.image;
   }
