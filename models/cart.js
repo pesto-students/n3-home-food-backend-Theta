@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
-
+const product = "Product"
 
 const itemSchema = mongoose.Schema({
     productId :{
-        type:mongoose.Schema. Types.ObjectId,
-        ref:"Product"
+        type:mongoose.Schema.Types.ObjectId,
+        ref:product
     },
     quantity:{
         type:Number,

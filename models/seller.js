@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-
+const min_quantity = 1
 const myItemSchema = mongoose.Schema({
     productId :{
         type:mongoose.Schema.Types.ObjectId,
@@ -8,7 +8,7 @@ const myItemSchema = mongoose.Schema({
     quantity:{
         type:Number,
         default:1,
-        min:[1,'Quantity cannot be less than 1']
+        min:[min_quantity,'Quantity cannot be less than 1']
     },
     price:{
         type:Number,

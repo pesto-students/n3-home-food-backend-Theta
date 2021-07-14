@@ -7,9 +7,14 @@ const { send } = require("process");
 const { User } = require("../models/user");
 const { Cart } = require("../models/cart");
 
+const encryption_type = 'sha256' 
+const key_id = process.env.RAZORPAY_KEY_ID
+const key_secret = process.env.RAZORPAY_KEY_SECRET
+
+
 const razorpay = new Razorpay({
-  key_id: "rzp_test_d0CoHtYXgWcl5z",
-  key_secret: "Izq2IYhZ8WgtyjIXtX66D6i6",
+  key_id: key_id,
+  key_secret: key_secret
 });
 
 router.post("/", async (req, res) => {
@@ -47,10 +52,10 @@ router.post("/", async (req, res) => {
 });
 
 router.post("/verification", async (req, res) => {
-  const secret = "Izq2IYhZ8WgtyjIXtX66D6i6";
+  const secret = key_secret
 
   const crypto = require("crypto");
-  const shasum = crypto.createHmac("sha256", secret);
+  const shasum = crypto.createHmac(encryption_type, secret);
   shasum.update(JSON.stringify(req.body));
   const digest = shasum.digest("hex");
 

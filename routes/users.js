@@ -7,7 +7,7 @@ const Secret = process.env.USER_SECRET;
 const mongoose = require("mongoose");
 const { Order } = require("../models/order");
 const { Seller } = require("../models/seller");
-
+const Expiration_time = "1w"
 
 
 router.get(`/`, async (req, res) => {
@@ -91,7 +91,7 @@ router.post("/login", async (req, res) => {
           customerType: seller.customerType,
         },
         secret,
-        { expiresIn: "1w" }
+        { expiresIn: "Expiration_time" }
       );
   
       res.status(200).json({
@@ -129,7 +129,7 @@ router.post("/login", async (req, res) => {
         customerType: user.customerType,
       },
       secret,
-      { expiresIn: "1w" }
+      { expiresIn: Expiration_time }
     );
     res.status(200).json({ success: true, token: token , userType : user.customerType ,userId:user.id });
   }
@@ -140,7 +140,7 @@ router.post("/login", async (req, res) => {
         customerType: user.customerType,
       },
       Secret,
-      { expiresIn: "1w" }
+      { expiresIn: Expiration_time }
     );
     res.status(200).json({ success: true, token: token , userType : user.customerType ,id:user.id});
   }

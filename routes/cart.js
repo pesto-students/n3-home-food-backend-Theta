@@ -6,15 +6,6 @@ const { User } = require("../models/user");
 
 const mongoose = require("mongoose");
 
-// router.get(`/`, async (req, res) => {
-//   const cart = await Cart.find();
-
-//   if (!cart) {
-//     res.status(500).json({ success: false });
-//   }
-//   res.status(200).send(cart);
-// });
-
 
 // get user cart by userid
 router.get(`/:id`, async (req, res) => {
@@ -37,9 +28,6 @@ router.post(`/`, async (req, res) => {
   const quantity = req.body.quantity;
   const userId = req.body.userId;
   const price = req.body.price;
-
-
-
 
   let productDetails = await Product.findById(productId);
   console.log('product',productDetails)

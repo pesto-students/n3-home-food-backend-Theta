@@ -18,7 +18,9 @@ function validateTokenAdmin() {
         `/${api}/sellers/login`,
         `/${api}/admin/register`,
         `/${api}/admin/login`,
-        // products api
+        `/${api}/admin/products`,
+        `/${api}/customer/products`,
+
     ]
   });
 }
