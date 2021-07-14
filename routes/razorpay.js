@@ -40,14 +40,12 @@ router.post("/", async (req, res) => {
 
   try {
     const response = await razorpay.orders.create(options);
-    console.log(response);
     res.json({
       id: response.id,
       currency: response.currency,
       amount: response.amount,
     });
   } catch (error) {
-    console.log(error);
   }
 });
 
@@ -59,14 +57,11 @@ router.post("/verification", async (req, res) => {
   shasum.update(JSON.stringify(req.body));
   const digest = shasum.digest("hex");
 
-  console.log(digest, req.body.response.razorpay_signature);
   if (digest === req.razorpay_signature) {
-    console.log("req is legit");
     // save this to database
   } else {
   }
 
-  console.log(req.body);
   res.json({ status: "ok" });
 });
 

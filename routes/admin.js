@@ -6,7 +6,6 @@ const Secret = process.env.ADMIN_SECRET
 
 
 router.get(`/`, async (req, res) =>{
-    console.log('admin')
     const adminList = await Admin.find();  
     if(!adminList) {
         res.status(500).json({success: false})
@@ -17,7 +16,6 @@ router.get(`/`, async (req, res) =>{
 
 
 router.post("/login", async (req, res) => {
-    console.log(req.body.email);
     const admin = await Admin.findOne({ phone: req.body.phone });
     if (!admin) return res.status(400).send("No Admin Found");
   
@@ -43,7 +41,6 @@ router.post("/login", async (req, res) => {
 
 
 router.post('/register', async (req,res)=>{
-    console.log('res',res)
     let admin = new Admin({
         phone: req.body.phone,
         customerType: req.body.customerType,

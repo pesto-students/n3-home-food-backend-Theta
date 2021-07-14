@@ -178,7 +178,6 @@ router.put(`/remove-cart/:id`, async (req, res) => {
     },
     { new: true }
   );
-  console.log(updatedUser)
   if (!updatedUser)
     return res.status(400).send("the user cannot be updated!");
 

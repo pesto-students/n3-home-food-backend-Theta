@@ -165,7 +165,6 @@ router.put("/approve-order/:orderId", async (req, res) => {
     { new: true }
   );
 
-  console.log(order);
   if (!order) return res.status(400).send("the order cannot be update!");
 
   res.send(order);
@@ -195,7 +194,6 @@ router.delete("/:id", (req, res) => {
 // rate a order
 router.put("/rate/:id", async (req, res) => {
   const orderList = await Order.findById(req.params.id);
-  console.log(orderList);
 
   const order = await Order.findByIdAndUpdate(
     req.params.id,
@@ -206,7 +204,6 @@ router.put("/rate/:id", async (req, res) => {
     { new: true }
   );
 
-  console.log(order);
   if (!order) return res.status(400).send("the order cannot be rated!");
 
   res.send(order);
@@ -340,7 +337,6 @@ router.get("/seller-wallet/:id", async (req, res) => {
     },
   ]);
 
-  console.log('orderlist ',OrderList)
   if (!OrderList) {
     res.status(500).json({ success: false });
   }
@@ -386,7 +382,6 @@ router.get(`/orders-category-wise`, async (req, res) => {
 //   OrderList.populate(result, {path: "user"});
 //   Weapon.populate(users, { path: 'weapon' }, function (err, users) {
 //     users.forEach(function (user) {
-//       console.log('%s uses a %s', users.name, user.weapon.name)
 //       // Indiana Jones uses a whip
 //       // Batman uses a boomerang
 //     });
@@ -463,7 +458,6 @@ router.get(`/categories`, async (req, res) => {
   );
 
   let pushed = [];
-  console.log(OrderList);
 
   // aslo apply for loop here
   for (let orderList of OrderList) {
@@ -479,7 +473,6 @@ router.get(`/categories`, async (req, res) => {
       });
 
       localArray.push(orderList[0]);
-      console.log(orderList[0]);
     }
     obj.categories = localArray;
     pushed.push(obj);
@@ -525,7 +518,6 @@ router.get(`/categories-seller/:sellerId`, async (req, res) => {
   );
 
   let pushed = [];
-  console.log(OrderList);
 
   // aslo apply for loop here
   for (let orderList of OrderList) {
@@ -541,7 +533,6 @@ router.get(`/categories-seller/:sellerId`, async (req, res) => {
       });
 
       localArray.push(orderList[0]);
-      console.log(orderList[0]);
     }
     obj.categories = localArray;
     pushed.push(obj);
