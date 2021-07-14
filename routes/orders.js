@@ -340,6 +340,7 @@ router.get("/seller-wallet/:id", async (req, res) => {
     },
   ]);
 
+  console.log('orderlist ',OrderList)
   if (!OrderList) {
     res.status(500).json({ success: false });
   }

@@ -87,7 +87,7 @@ router.get(`/`, async (req, res) => {
   const page = req.query.page ? parseInt(req.query.page) : "";
   const skipIndex = req.query.page ? (req.query.page - 1) * limit : "";
 
-  const sellerList = await Seller.find()
+  const sellerList = await Seller.find({ status: "Approved" })
     .limit(limit)
     .skip(skipIndex)
     .populate("products");
