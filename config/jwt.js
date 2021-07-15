@@ -44,7 +44,6 @@ function validateTokenUser() {
 }
 
 async function isRevoked(req,payload,done){
-  console.log('payload', payload)
     if(payload.isAdmin) {
      done()  
     }

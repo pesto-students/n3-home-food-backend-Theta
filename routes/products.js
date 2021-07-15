@@ -41,7 +41,6 @@ const uploadOptions = multer({ storage: storage });
 router.get("/images/:key", (req, res) => {
   const key = req.params.key;
   const readStream = getFileStream(key);
-  console.log();
   readStream.pipe(res);
 });
 
@@ -59,7 +58,6 @@ router.post(`/`, uploadOptions.single("image"), async (req, res) => {
     const file = req.file;
     // upload the image to s3
     const uploadImage = await UploadFile(file);
-    console.log(uploadImage.Location);
     if (!file) return res.status(400).send("No image in the request");
 
     const fileName = file.filename;
@@ -115,7 +113,6 @@ router.get(`/`, async (req, res) => {
   if (req.query.categories) {
     filter = { category: req.query.categories.split(",") };
   }
-  console.log(filter);
   const productList = await Product.find(filter).populate("category");
 
   if (!productList) {
@@ -146,7 +143,6 @@ router.put("/:id", uploadOptions.single("image"), async (req, res) => {
   const file = req.file;
   // upload the image to s3
   const uploadImage = await UploadFile(file);
-  console.log(uploadImage);
 
   let imagepath;
 
@@ -178,7 +174,6 @@ router.put("/:id", uploadOptions.single("image"), async (req, res) => {
 
 // Appove pending products
 router.put("/product-approval/:id", async (req, res) => {
-  console.log("req.body.productId", req.params.id);
   if (!mongoose.isValidObjectId(req.params.id)) {
     return res.status(400).send("Invalid Product Id");
   }
@@ -211,7 +206,6 @@ router.put("/product-approval/:id", async (req, res) => {
 
 // Reject pending products
 router.put("/product-rejection/:id", async (req, res) => {
-  console.log("req.body.productId", req.params.id);
   if (!mongoose.isValidObjectId(req.params.id)) {
     return res.status(400).send("Invalid Product Id");
   }
@@ -262,7 +256,6 @@ router.delete("/:id", (req, res) => {
 
 // Reassign product if similar already exist
 router.put("/product-reassign/:id", async (req, res) => {
-  console.log("req.body.productId", req.params.id);
   if (!mongoose.isValidObjectId(req.params.id)) {
     return res.status(400).send("Invalid Product Id");
   }
@@ -316,7 +309,6 @@ router.get(`/get/approved`, async (req, res) => {
   } else {
     filter = { status: "Approved" };
   }
-  console.log(filter);
   const productList = await Product.find(filter)
     .limit(limit)
     .skip(skipIndex)
@@ -348,7 +340,6 @@ router.get(`/get/pending`, async (req, res) => {
   } else {
     filter = { status: "Pending" };
   }
-  console.log(filter);
   const productList = await Product.find(filter)
     .limit(limit)
     .skip(skipIndex)

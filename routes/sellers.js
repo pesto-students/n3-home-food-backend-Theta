@@ -117,7 +117,6 @@ router.get(`/`, async (req, res) => {
       },
     ]);
 
-    console.log(OrderList.length);
     if (OrderList.length) {
       item.rating = OrderList[0].avgRating;
     }
@@ -174,7 +173,6 @@ router.get(`/pincode/:pincode`, async (req, res) => {
   let pincodeCheck = req.params.pincode;
   let pincodeLower = Number(pincodeCheck) - 20;
   let pincodeHigher = Number(pincodeCheck) + 20;
-  console.log(pincodeLower, pincodeHigher);
   let filter = { pincode: { $gt: pincodeLower, $lt: pincodeHigher } };
   const seller = await Seller.find(filter)
     .limit(limit)
@@ -212,7 +210,6 @@ router.get(`/pincode/:pincode`, async (req, res) => {
     if (OrderList.length) {
       item.rating = OrderList[0].avgRating;
     }
-    console.log(OrderList);
   }
 
   if (!seller) {
@@ -307,7 +304,6 @@ router.get(`/get/getproducts`, async (req, res) => {
 
 // get products of sellers by category
 router.get(`/get/products-category-wise`, async (req, res) => {
-  console.log("filter", req);
   let filter = mongoose.Types.ObjectId(req.query.sellerid);
 
   const sellerList = await Seller.aggregate([
@@ -323,7 +319,6 @@ router.get(`/get/products-category-wise`, async (req, res) => {
       },
     },
   ]);
-  console.log(sellerList);
   if (!sellerList) {
     res.status(500).json({ success: false });
   }
@@ -354,7 +349,6 @@ router.get(`/get/SellersByCategory`, async (req, res) => {
       { pincode: { $gt: pincodeLower, $lt: pincodeHigher } },
     ],
   });
-  console.log(sellerList);
 
   if (!sellerList) {
     res.status(500).json({ success: false });
@@ -381,7 +375,6 @@ router.get(`/get/SellersByCategoryFilter`, async (req, res) => {
   })
     .limit(limit)
     .skip(skipIndex);
-  console.log(sellerList);
 
   if (!sellerList) {
     res.status(500).json({ success: false });
@@ -390,7 +383,6 @@ router.get(`/get/SellersByCategoryFilter`, async (req, res) => {
 });
 
 router.post("/register", async (req, res) => {
-  console.log("res", res);
 
   if (req.body.phone) {
     const seller = await Seller.findOne({ phone: req.body.phone });
@@ -418,7 +410,6 @@ router.post("/register", async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-  console.log(req.body.email);
   const seller = await Seller.findOne({ email: req.body.email });
   if (!seller) return res.status(400).send("No User Found");
 
@@ -463,7 +454,6 @@ router.put("/:id", async (req, res) => {
   };
 
   userExist.myProducts.push(myProduct);
-  console.log("product", userExist.myProducts);
   // check if the exist product array has cateogry of the new product we are adding
   for (let item of req.body.category) {
     if (!categoryArray.includes(item)) {
@@ -645,7 +635,6 @@ router.put("/edit/:id", uploadOptions.single("image"), async (req, res) => {
     return res.status(500).json({ success: false });
   }
 
-  console.log(seller, req.body);
 
   const file = req.file;
   let imagepath;
@@ -681,7 +670,6 @@ router.put("/edit/:id", uploadOptions.single("image"), async (req, res) => {
     { new: true }
   );
 
-  console.log(updatedSeller);
   if (!updatedSeller)
     return res.status(400).send("the user cannot be created!");
 
@@ -698,7 +686,6 @@ router.put("/delete-product/:id", async (req, res) => {
   seller.myProducts = seller.myProducts.filter(
     (element) => element._id.toString() !== req.body.productId
   );
-  console.log(seller.myProducts);
   const updatedSeller = await Seller.findByIdAndUpdate(
     req.params.id,
     {

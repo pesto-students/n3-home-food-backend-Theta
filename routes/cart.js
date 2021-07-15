@@ -42,7 +42,6 @@ router.post(`/`, async (req, res) => {
 
 
   let productDetails = await Product.findById(productId);
-  console.log('product',productDetails)
   if (!productDetails) {
     return res.status(500).json({
       type: "Not Found",
@@ -65,7 +64,6 @@ router.post(`/`, async (req, res) => {
     const indexFound = cart.items.findIndex(
       (item) => item.productId.toString() == productId
     );
-    console.log("indexFound", indexFound);
     // item do not exist
     if(indexFound === -1 && quantity > 0){
             const product = {

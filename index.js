@@ -48,14 +48,11 @@ mongoose
     dbName: process.env.DB_NAME,
   })
   .then(() => {
-    console.log("Database Connection is ready...",api);
   })
   .catch((err) => {
-    console.log(err);
   });
 
 const PORT = process.env.PORT || 3000 
 //Server
 app.listen(PORT, () => {
-  console.log(`server is running http://localhost:${process.env.PORT || 3000} `);
 });

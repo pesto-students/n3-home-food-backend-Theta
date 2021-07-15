@@ -8,9 +8,12 @@ const { User } = require("../models/user");
 const { Cart } = require("../models/cart");
 
 const razorpay = new Razorpay({
-  key_id: "rzp_test_d0CoHtYXgWcl5z",
-  key_secret: "Izq2IYhZ8WgtyjIXtX66D6i6",
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
+
+
+
 
 router.post("/", async (req, res) => {
   const user = await User.findById(req.body.userId);
@@ -35,33 +38,28 @@ router.post("/", async (req, res) => {
 
   try {
     const response = await razorpay.orders.create(options);
-    console.log(response);
     res.json({
       id: response.id,
       currency: response.currency,
       amount: response.amount,
     });
   } catch (error) {
-    console.log(error);
   }
 });
 
 router.post("/verification", async (req, res) => {
-  const secret = "Izq2IYhZ8WgtyjIXtX66D6i6";
+  const secret = process.env.RAZORPAY_KEY_SECRET
 
   const crypto = require("crypto");
   const shasum = crypto.createHmac("sha256", secret);
   shasum.update(JSON.stringify(req.body));
   const digest = shasum.digest("hex");
 
-  console.log(digest, req.body.response.razorpay_signature);
   if (digest === req.razorpay_signature) {
-    console.log("req is legit");
     // save this to database
   } else {
   }
 
-  console.log(req.body);
   res.json({ status: "ok" });
 });
 
