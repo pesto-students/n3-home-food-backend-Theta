@@ -165,7 +165,7 @@ router.get(`/:id`, async (req, res) => {
 
 // get sellers by pincode and pagination
 router.get(`/pincode/:pincode`, async (req, res) => {
-  const limit = req.query.page ? parseInt(2) : "";
+  const limit = req.query.page ? parseInt(100) : "";
   const page = req.query.page ? parseInt(req.query.page) : "";
   const skipIndex = req.query.page ? (req.query.page - 1) * limit : "";
   const results = {};
